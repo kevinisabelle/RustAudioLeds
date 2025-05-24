@@ -1,0 +1,15 @@
+[package]
+name = "AudioLeds"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+serialport = { version = "4.7.2" }
+anyhow = "1.0.98"
+cpal = "0.15.3"
+
+[profile.release]
+opt-level = "z"
+lto = true
+panic = "abort"
+debug = false
