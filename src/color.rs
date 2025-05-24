@@ -10,7 +10,7 @@ impl Color {
     }
 
     pub fn to_slice(&self) -> [u8; 3] {
-        [self.g, self.r, self.b]
+        [self.g.min(254), self.r.min(254), self.b.min(254)]
     }
 
     pub fn brightness(&self, factor: f32) -> Color {

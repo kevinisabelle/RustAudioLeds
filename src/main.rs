@@ -7,7 +7,7 @@ use cpal::StreamConfig;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use crate::color::{BLACK, RED};
 
-const buffer_size: usize = 10; // Size of the rolling average buffer
+const BUFFER_SIZE: usize = 10; // Size of the rolling average buffer
 
 struct Settings  {
     smooth_size: usize,
@@ -27,6 +27,11 @@ impl std::fmt::Debug for Settings {
     }
 }
 
+struct SpectrumConfig {
+    frequencies:  Vec<f32>,
+    fft_size:     usize,
+}
+
 fn main() -> anyhow::Result<()> {
     // --- Audio Setup ---
     let host = cpal::default_host();
@@ -36,8 +41,15 @@ fn main() -> anyhow::Result<()> {
     println!("Using device: {}", device.name()?);
     let config: StreamConfig = device.default_input_config()?.into();
 
+    // 22 bands from 30Hz to 22kHz
+    let spectrum_config = SpectrumConfig {
+        frequencies: vec![30.0, 60.0, 80.0, 100.0, 120.0, 180.0, 240.0, 320.0, 480.0, 620.0, 780.0, 960.0,
+                          1920.0, 3000.0, 4800.0, 6000.0, 8000.0, 9600.0, 12000.0, 14000.0, 19200.0, 22000.0],
+        fft_size: 1024, // FFT size is the number of samples to process at once
+    };
+
     let mut settings = Settings {
-        smooth_size: buffer_size,
+        smooth_size: BUFFER_SIZE,
         gain: GAIN,
         fps: FPS,
         color: String::from("white"),
@@ -48,7 +60,7 @@ fn main() -> anyhow::Result<()> {
         match arg.as_str() {
             "--smooth" => {
                 if let Some(val) = args.next() {
-                    settings.smooth_size = val.parse().unwrap_or(buffer_size);
+                    settings.smooth_size = val.parse().unwrap_or(BUFFER_SIZE);
                 }
             }
             "--gain" => {
@@ -76,10 +88,9 @@ fn main() -> anyhow::Result<()> {
 
     let audio_level = Arc::new(Mutex::new(0.0f32));
     let audio_level_clone = audio_level.clone();
-
     let audio_levels = Arc::new(Mutex::new(vec![0.0f32; settings_arc.smooth_size])); // Rolling average buffer
-
     let audio_levels_clone = audio_levels.clone();
+
     let settings_arc_clone = settings_arc.clone();
 
     let input_stream = device.build_input_stream(
@@ -97,8 +108,7 @@ fn main() -> anyhow::Result<()> {
         .timeout(Duration::from_millis(10))
         .open()?;
 
-    let frame_delay = Duration::from_millis(1_000 / FPS);
-
+    let frame_delay = Duration::from_millis(1_000 / settings_arc.fps);
     let color = color::color_from_string(&settings_arc.color);
 
     loop {
