@@ -1,4 +1,6 @@
-﻿pub struct Color {
+﻿use std::fmt::{Debug, Formatter};
+
+pub struct Color {
     pub r: u8,
     pub g: u8,
     pub b: u8,
@@ -19,6 +21,31 @@ impl Color {
             g: (self.g as f32 * factor).min(254.0) as u8,
             b: (self.b as f32 * factor).min(254.0) as u8,
         }
+    }
+    
+    pub fn mix(&self, other: &Color, factor: f32) -> Color {
+        Color {
+            r: ((self.r as f32 * (1.0 - factor)) + (other.r as f32 * factor)).min(254.0) as u8,
+            g: ((self.g as f32 * (1.0 - factor)) + (other.g as f32 * factor)).min(254.0) as u8,
+            b: ((self.b as f32 * (1.0 - factor)) + (other.b as f32 * factor)).min(254.0) as u8,
+        }
+    }
+}
+
+impl Clone for Color {
+    fn clone(&self) -> Self {
+        Color {
+            r: self.r,
+            g: self.g,
+            b: self.b,
+        }
+    }
+}
+
+impl Debug for Color {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        // Write to Hex format
+        write!(f, "{:02X}{:02X}{:02X}", self.r, self.g, self.b)
     }
 }
 

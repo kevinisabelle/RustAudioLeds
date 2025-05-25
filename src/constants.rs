@@ -5,6 +5,8 @@ pub const END_MARKER: u8 = 0xFF;
 pub const BAUD: u32 = 500_000;
 pub const PORT: &str = "/dev/ttyUSB0";        // adapt to your system
 pub const FPS: u64 = 60;
-pub const GAIN: f32 = 1.0; // Adjust this to change sensitivity to audio level
-pub const FFT_SIZE: usize = 2048; // Size of FFT buffer
-
+pub const GAIN: f32 = 7.0; // Adjust this to change sensitivity to audio level
+pub const FFT_SIZE: usize = 2048; // Size of FFT buffer (4096 is more accurate, but slower, 2048 is faster)
+pub const SAMPLE_RATE: u32 = 44100;
+pub const DEFAULT_SMOOTH_SIZE: usize = 6; // Size of the rolling average buffer
+pub const DEFAULT_SKEW: f32 = 0.75; // Default skew value
