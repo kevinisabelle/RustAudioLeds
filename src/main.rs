@@ -3,6 +3,9 @@ mod color;
 mod settings;
 mod animations;
 mod dsp;
+mod bluetooth;
+
+mod bluez;
 
 use crate::animations::{full_spectrum, full_spectrum_with_max, points_spectrum, spectrum_middle, spectrum_middle_with_max};
 use crate::color::{Color, BLACK};
@@ -13,12 +16,24 @@ use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::StreamConfig;
 use std::{sync::{Arc, Mutex}, thread, time::Duration};
 use thread::sleep;
+use zbus::Connection;
+use crate::bluez::agent::{register_agent, Agent};
+use crate::bluez::utils::register_object;
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     display_usage();
     
     println!("Starting LED Strip Visualizer...");
+
+    let connection = Connection::system().await?;
+
+    println!("Connection to dbus established!");
+
+    let agent = Arc::new(Agent::new(AGENT_PATH.to_string()));
+    register_object(&connection, agent).await?;
+    register_agent(&connection, AGENT_PATH, "KeyboardDisplay").await?;
 
     // --- Configuration ---
     let settings = get_config();
@@ -82,11 +97,18 @@ fn animate_leds(frequency_levels: &Arc<Mutex<FrequenciesValues>>, settings_arc: 
     let mut buf = Vec::with_capacity(NUM_LEDS * 3 + 1);
     let nb_frequency_levels = frequency_levels.lock().unwrap().len();
 
-    for i in 0..nb_frequency_levels {
-        let level = frequency_levels.lock().unwrap()[i].average();
-        let max = frequency_levels.lock().unwrap()[i].max();
-        let strip_colors = get_strip_colors(level, max, settings_arc, i);
-        output_colors_to_buffer(&mut buf, &strip_colors, i);
+    if (settings_arc.display_mode == DisplayMode::Oscilloscope){
+        
+        
+        
+        
+    } else {
+        for i in 0..nb_frequency_levels {
+            let level = frequency_levels.lock().unwrap()[i].average();
+            let max = frequency_levels.lock().unwrap()[i].max();
+            let strip_colors = get_strip_colors(level, max, settings_arc, i);
+            output_colors_to_buffer(&mut buf, &strip_colors, i);
+        }
     }
 
     buf.push(END_MARKER);

@@ -4,6 +4,7 @@ use crate::DEFAULT_SMOOTH_SIZE;
 use crate::constants::{DEFAULT_SKEW, FFT_SIZE, FPS, GAIN};
 
 #[derive(Debug)]
+#[derive(PartialEq)]
 pub enum DisplayMode {
     Spectrum,
     Oscilloscope,
