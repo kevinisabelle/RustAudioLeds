@@ -29,7 +29,7 @@ pub const GATT_DESCRIPTOR_IFACE: &str = "org.bluez.GattDescriptor1";
 pub const GATT_CHARACTERISTIC_IFACE: &str = "org.bluez.GattCharacteristic1";
 pub const GATT_SERVICE_IFACE: &str = "org.bluez.GattService1";
 pub const GATT_APPLICATION_IFACE: &str = "org.bluez.GattApplication1";
-pub const ADV_APPEARANCE_GAMEPAD: u16 = 0x03c4;
+pub const ADV_APPEARANCE_GAMEPAD: u16 = 0x0180;
 
 /*
 | #                 | UUID (128-bit)†                          | Properties       | Value type / size | Encoding & notes                                                                   |
@@ -64,5 +64,5 @@ pub const GATT_GAINS_UUID: &str = "3E0E0009-7C7A-47B0-9FD5-1FC3044C3E63";
 pub const GATT_SKEW_UUID: &str = "3E0E000A-7C7A-47B0-9FD5-1FC3044C3E63";
 pub const GATT_BRIGHTNESS_UUID: &str = "3E0E000B-7C7A-47B0-9FD5-1FC3044C3E63";
 pub const GATT_DISPLAY_MODE_UUID: &str = "3E0E000C-7C7A-47B0-9FD5-1FC3044C3E63";
-    
+
 pub const GATT_ANIMATION_MODE_UUID: &str = "3E0E000D-7C7A-47B0-9FD5-1FC3044C3E63";

@@ -126,7 +126,7 @@ pub async fn get_visualizer_service(
     settings: Arc<Mutex<Settings>>
 ) -> zbus::Result<Arc<Mutex<VisualizerService>>> {
     let visualizer_service = Arc::new(Mutex::new(VisualizerService::new(
-        "/org/bluez/gamepadki/devinfo_serv".to_string(),
+        "/com/kevinisabelle/ledvisualizer/visu_serv".to_string(),
     )));
 
     let visualizer_service_path = visualizer_service.lock().unwrap().object_path().clone();
@@ -145,10 +145,10 @@ pub async fn get_visualizer_service(
     visualizer_service.lock().unwrap().gain_chrc = Some(gain_chrc.clone());
 
     let visualizer_service_interface = VisualizerServiceInterface(visualizer_service.clone());
-    let device_info_service_path = visualizer_service.lock().unwrap().object_path().clone();
+    let visualizer_service_object_path = visualizer_service.lock().unwrap().object_path().clone();
     register_object_with_path(
         connection,
-        device_info_service_path.clone(),
+        visualizer_service_object_path.clone(),
         visualizer_service_interface,
     ).await?;
 
