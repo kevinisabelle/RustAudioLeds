@@ -3,15 +3,14 @@ use crate::color::{color_from_string, Color};
 use crate::DEFAULT_SMOOTH_SIZE;
 use crate::constants::{DEFAULT_SKEW, FFT_SIZE, FPS, GAIN};
 
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum DisplayMode {
     Spectrum,
     Oscilloscope,
     ColorGradient,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum AnimationMode {
     Full,
     FullWithMax,
@@ -21,7 +20,7 @@ pub enum AnimationMode {
     PointsMiddle,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Settings  {
     pub smooth_size: usize,
     pub gain: f32,

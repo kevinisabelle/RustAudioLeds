@@ -6,7 +6,7 @@ use crate::settings::Settings;
 pub fn full_spectrum(
     level: f32,
     index: usize,
-    settings_arc: &Arc<Settings>,
+    settings_arc: &Settings,
     strip_colors: &mut Vec<Color>,
 ) {
     let color1 = settings_arc.color1_object.clone();
@@ -33,7 +33,7 @@ pub fn full_spectrum_with_max(
     level: f32,
     max: f32,
     index: usize,
-    settings_arc: &Arc<Settings>,
+    settings_arc: &Settings,
     strip_colors: &mut Vec<Color>,
 ) {
     full_spectrum(level, index, settings_arc, strip_colors);
@@ -43,7 +43,7 @@ pub fn full_spectrum_with_max(
 pub fn points_spectrum(
     level: f32,
     index: usize,
-    settings_arc: &Arc<Settings>,
+    settings_arc: &Settings,
     strip_colors: &mut Vec<Color>,
 ) {
     let mut first_led_index = (level * LEDS_PER_STRIP as f32).floor() as usize;
@@ -62,7 +62,7 @@ pub fn points_spectrum(
 pub fn spectrum_middle(
     level: f32,
     index: usize,
-    settings_arc: &Arc<Settings>,
+    settings_arc: &Settings,
     strip_colors: &mut Vec<Color>,
 ) {
     let color1 = settings_arc.color1_object.clone();
@@ -96,7 +96,7 @@ pub fn spectrum_middle_with_max(
     level: f32,
     max: f32,
     index: usize,
-    settings_arc: &Arc<Settings>,
+    settings_arc: &Settings,
     strip_colors: &mut Vec<Color>,
 ) {
     spectrum_middle(level, index, settings_arc, strip_colors);

@@ -7,10 +7,13 @@ use crate::settings::{FrequenciesValues, SamplesWindow, Settings};
 pub fn process_audio_data(
     data: &[f32],
     frequency_levels: &Arc<Mutex<FrequenciesValues>>,
-    settings: &Arc<Settings>,
+    settings: &Settings,
     samples_window: &Arc<Mutex<SamplesWindow>>,
     df: f32,
 ) {
+    // println!("Processing audio data... settings = {:?}", settings);
+    // println!("Frequency levels length: {}", frequency_levels.lock().unwrap().len());
+
     // 1.  Move samples into the rolling window
     {
         let mut win = samples_window.lock().unwrap();
