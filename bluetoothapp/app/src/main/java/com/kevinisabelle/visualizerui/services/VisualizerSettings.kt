@@ -1,19 +1,7 @@
 ﻿package com.kevinisabelle.visualizerui.services
 
-enum class DisplayMode {
-    Spectrum,
-    Oscilloscope,
-    ColorGradient
-}
-
-enum class AnimationMode {
-    Full,
-    FullWithMax,
-    Points,
-    FullMiddle,
-    FullMiddleWithMax,
-    PointsMiddle
-}
+import com.kevinisabelle.visualizerui.data.AnimationMode
+import com.kevinisabelle.visualizerui.data.DisplayMode
 
 data class Settings(
     val smoothSize: Int,

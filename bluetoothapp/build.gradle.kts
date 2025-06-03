@@ -3,4 +3,5 @@ plugins {
     id("com.android.application") version "8.10.0-alpha05" apply false
     id("org.jetbrains.kotlin.android") version "2.0.21" apply false
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.21" apply false
+    id("com.google.dagger.hilt.android") version "2.56.2" apply false          // :contentReference[oaicite:0]{index=0}
 }
