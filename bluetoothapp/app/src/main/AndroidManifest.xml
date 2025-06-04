@@ -6,10 +6,15 @@
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
     <uses-feature android:name="android.hardware.bluetooth"     android:required="true" />
 
-    <!-- API-level–specific permissions -->
-    <!-- Android 12 (API 31)+ – runtime “Nearby devices” group -->
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"      />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"   />
+    <!-- Pre-31 runtime permissions -->
+    <uses-permission android:name="android.permission.BLUETOOTH"            android:maxSdkVersion="30"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"      android:maxSdkVersion="30"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30"/>
+
+    <!-- 31+ runtime permissions -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+                     android:usesPermissionFlags="neverForLocation"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
 
     <application
             android:name=".VisualizerApplication"
