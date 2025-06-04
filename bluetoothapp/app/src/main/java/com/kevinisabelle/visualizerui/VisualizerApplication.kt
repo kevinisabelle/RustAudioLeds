@@ -4,7 +4,9 @@ import android.app.Application
 import com.kevinisabelle.visualizerui.data.AnimationMode
 import com.kevinisabelle.visualizerui.data.DisplayMode
 import com.kevinisabelle.visualizerui.services.Settings
+import dagger.hilt.android.HiltAndroidApp
 
+@HiltAndroidApp
 class VisualizerApplication : Application() {
 
     val settings: Settings by lazy {

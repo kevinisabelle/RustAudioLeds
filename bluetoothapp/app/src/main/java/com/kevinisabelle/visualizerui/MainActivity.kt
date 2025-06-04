@@ -8,14 +8,16 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -90,15 +92,11 @@ object Routes {
 @Composable
 fun SplashPermScreen(onPermissionsGranted: () -> Unit) {
     val requiredPerms = remember {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) listOf(
+        listOf(
             Manifest.permission.BLUETOOTH_SCAN,
             Manifest.permission.BLUETOOTH_CONNECT,
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.POST_NOTIFICATIONS,
-        ) else listOf(
-            Manifest.permission.BLUETOOTH,
-            Manifest.permission.BLUETOOTH_ADMIN,
-            Manifest.permission.ACCESS_FINE_LOCATION,
         )
     }
 
@@ -117,7 +115,7 @@ fun SplashPermScreen(onPermissionsGranted: () -> Unit) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
-                imageVector = Icons.Default.Bluetooth,
+                imageVector = Icons.Default.AddCircle,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(96.dp)
@@ -130,7 +128,9 @@ fun SplashPermScreen(onPermissionsGranted: () -> Unit) {
                     color = MaterialTheme.colorScheme.onPrimary
                 )
                 Spacer(Modifier.height(16.dp))
-                Button(onClick = { permState.launchMultiplePermissionRequest() }) {
+                Button(onClick = {
+                    permState.launchMultiplePermissionRequest()
+                }) {
                     Text("Grant permissions")
                 }
             } else {
