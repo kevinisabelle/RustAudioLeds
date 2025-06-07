@@ -25,7 +25,7 @@ fun ScanScreen(
     navController: NavController,
     viewModel: ScanViewModel = hiltViewModel()
 ) {
-    val ui by viewModel.ui.collectAsState()
+    val ui : viewModel.ui.collectAsState()
 
     Scaffold(
         topBar = {
