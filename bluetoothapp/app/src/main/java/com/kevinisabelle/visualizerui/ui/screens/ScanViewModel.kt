@@ -50,7 +50,7 @@ class ScanViewModel @Inject constructor(
                     state = ScanUi.Error,
                     errorMessage = result.message,
                     actionLabel = result.actionLabel,
-                    onAction = { result.recoveryAction(::scan) },
+                    onAction = { result.recoveryAction?.let { it1 -> viewModelScope.launch { it1(::scan) } } },
                     canRefresh = true
                 )
             }

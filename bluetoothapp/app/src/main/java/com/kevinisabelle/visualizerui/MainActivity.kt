@@ -10,10 +10,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.kevinisabelle.visualizerui.ui.screens.ScanScreen
+import com.kevinisabelle.visualizerui.ui.screens.ScanViewModel
 import com.kevinisabelle.visualizerui.ui.screens.SplashPermScreen
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -54,7 +57,12 @@ fun VisualizerNavHost(navController: NavHostController) {
                 }
             )
         }
-        composable(Routes.SCAN) { /* TODO ScanScreen() */ }
+        composable(Routes.SCAN) {
+            ScanScreen(
+                navController,
+                viewModel = hiltViewModel<ScanViewModel>()
+            )
+        }
         composable(Routes.CONNECTING) { /* TODO ConnectingScreen() */ }
         composable(Routes.DASHBOARD) { /* TODO DashboardScreen() */ }
         composable(Routes.PRESETS) { /* TODO PresetsScreen() */ }

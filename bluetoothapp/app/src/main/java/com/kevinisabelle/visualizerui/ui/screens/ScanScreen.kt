@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -14,18 +15,22 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kevinisabelle.visualizerui.ble.ScanUi
+import com.kevinisabelle.visualizerui.ui.components.DeviceList
+import com.kevinisabelle.visualizerui.ui.components.ErrorCard
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScanScreen(
     navController: NavController,
     viewModel: ScanViewModel = hiltViewModel()
 ) {
-    val ui : viewModel.ui.collectAsState()
+    val ui by viewModel.ui.collectAsState()
 
     Scaffold(
         topBar = {
@@ -43,7 +48,7 @@ fun ScanScreen(
         when (ui.state) {
             ScanUi.DeviceList -> DeviceList(
                 devices = ui.devices,
-                onConnect = { device -> viewModel.connect(device) },
+                onConnect = { device -> viewModel.connect(device.device) },
                 modifier = Modifier.padding(innerPadding)
             )
             ScanUi.Scanning -> Box(
