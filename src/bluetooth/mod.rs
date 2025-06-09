@@ -5,3 +5,5 @@ mod gain_chrc;
 mod fps_chrc;
 mod fft_size_chrc;
 pub mod registration;
+mod led_count_chrc;
+mod leds_buffer_chrc;

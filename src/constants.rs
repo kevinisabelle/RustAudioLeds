@@ -31,6 +31,9 @@ pub const GATT_SERVICE_IFACE: &str = "org.bluez.GattService1";
 pub const GATT_APPLICATION_IFACE: &str = "org.bluez.GattApplication1";
 pub const ADV_APPEARANCE_GAMEPAD: u16 = 0x0180;
 
+pub const GATT_LED_COUNT_UUID: &str = "3E0E000E-7C7A-47B0-9FD5-1FC3044C3E63";
+pub const GATT_LED_BUFFER_UUID: &str = "3E0E000F-7C7A-47B0-9FD5-1FC3044C3E63";
+
 /*
 | #                 | UUID (128-bit)†                          | Properties       | Value type / size | Encoding & notes                                                                   |
 | ----------------- | ---------------------------------------- | ---------------- | ----------------- | ---------------------------------------------------------------------------------- |

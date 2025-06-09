@@ -15,6 +15,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.kevinisabelle.visualizerui.ui.screens.ConnectingScreen
+import com.kevinisabelle.visualizerui.ui.screens.ConnectingViewModel
 import com.kevinisabelle.visualizerui.ui.screens.ScanScreen
 import com.kevinisabelle.visualizerui.ui.screens.ScanViewModel
 import com.kevinisabelle.visualizerui.ui.screens.SplashPermScreen
@@ -63,7 +67,16 @@ fun VisualizerNavHost(navController: NavHostController) {
                 viewModel = hiltViewModel<ScanViewModel>()
             )
         }
-        composable(Routes.CONNECTING) { /* TODO ConnectingScreen() */ }
+        composable(
+            route = Routes.CONNECTING + "/{address}",
+            arguments = listOf(navArgument("address") { type = NavType.StringType })
+        ) { backStackEntry ->
+            ConnectingScreen(
+                navController = navController,
+                address = backStackEntry.arguments?.getString("address") ?: "",
+                viewModel = hiltViewModel<ConnectingViewModel>()
+            )
+        }
         composable(Routes.DASHBOARD) { /* TODO DashboardScreen() */ }
         composable(Routes.PRESETS) { /* TODO PresetsScreen() */ }
         composable(Routes.PARAMETERS) { /* TODO ParametersScreen() */ }
@@ -81,6 +94,10 @@ object Routes {
     const val PARAMETERS = "parameters"
     const val SETTINGS = "settings"
     const val ABOUT = "about"
+
+    fun connectingWithAddress(address: String): String {
+        return "$CONNECTING/$address"
+    }
 }
 /**
  * Placeholder theme – adopt your Material 3 color‑scheme later.
