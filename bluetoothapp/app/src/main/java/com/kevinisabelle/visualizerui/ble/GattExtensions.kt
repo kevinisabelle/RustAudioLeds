@@ -58,6 +58,8 @@ fun <T : Any> encode(spec: ParameterSpec<T>, value: T): ByteArray = when (spec) 
 
     ParameterSpec.Display          -> byteArrayOf((value as DisplayMode).toByte())
     ParameterSpec.Animation        -> byteArrayOf((value as AnimationMode).toByte())
+    ParameterSpec.LedCount         -> (value as UShort).toLeBytes()
+    ParameterSpec.LedsBuffer       -> (value as ByteArray)
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -77,4 +79,6 @@ fun <T : Any> decode(spec: ParameterSpec<T>, bytes: ByteArray): T = when (spec) 
 
     ParameterSpec.Display          -> bytes[0].toDisplayMode()    as T
     ParameterSpec.Animation        -> bytes[0].toAnimationMode()  as T
+    ParameterSpec.LedCount         -> bytes.toUShort()    as T
+    ParameterSpec.LedsBuffer       -> bytes                as T
 }

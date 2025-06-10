@@ -33,4 +33,9 @@ sealed interface ParameterSpec<T : Any> {
     object Brightness : ParameterSpec<Float>    { override val uuid = visualizerUuid(0x000B) }
     object Display    : ParameterSpec<DisplayMode> { override val uuid = visualizerUuid(0x000C) }
     object Animation  : ParameterSpec<AnimationMode> { override val uuid = visualizerUuid(0x000D) }
+    object LedCount   : ParameterSpec<UShort>   { override val uuid = visualizerUuid(0x000E) }
+    object LedsBuffer:  ParameterSpec<ByteArray> {
+        override val uuid = visualizerUuid(0x000F)
+        const val SIZE = 792 // 264 × RGB888
+    }
 }

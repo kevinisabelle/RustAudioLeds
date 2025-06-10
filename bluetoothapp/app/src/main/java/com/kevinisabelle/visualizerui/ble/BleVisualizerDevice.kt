@@ -31,15 +31,12 @@ class BleVisualizerDevice private constructor(
     suspend fun <T : Any> write(spec: ParameterSpec<T>, value: T) {
         doGattIo {
             val ch = ch(spec)
-            gatt.writeCharacteristic(
-                ch,
-                encode(spec, value),
-                BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-            )
+            ch.value = encode(spec, value)
+            ch.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+            gatt.writeCharacteristic(ch)
             eventFlow.first { it is GattEvent.Result &&
                     it.type == ResultType.Write &&
                     it.uuid == spec.uuid }
-            /* ensure the lambda’s *last* expression is Unit */
             Unit
         }
     }
