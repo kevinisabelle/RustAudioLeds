@@ -19,6 +19,8 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.kevinisabelle.visualizerui.ui.screens.ConnectingScreen
 import com.kevinisabelle.visualizerui.ui.screens.ConnectingViewModel
+import com.kevinisabelle.visualizerui.ui.screens.DashboardScreen
+import com.kevinisabelle.visualizerui.ui.screens.DashboardViewModel
 import com.kevinisabelle.visualizerui.ui.screens.ScanScreen
 import com.kevinisabelle.visualizerui.ui.screens.ScanViewModel
 import com.kevinisabelle.visualizerui.ui.screens.SplashPermScreen
@@ -77,7 +79,14 @@ fun VisualizerNavHost(navController: NavHostController) {
                 viewModel = hiltViewModel<ConnectingViewModel>()
             )
         }
-        composable(Routes.DASHBOARD) { /* TODO DashboardScreen() */ }
+        composable(Routes.DASHBOARD) {
+            // TODO DashboardScreen(navController) - implement the dashboard screen
+            // For now, just a placeholder
+            DashboardScreen(
+                navController = navController,
+                viewModel = hiltViewModel<DashboardViewModel>() // Replace with actual DashboardViewModel
+            )
+        }
         composable(Routes.PRESETS) { /* TODO PresetsScreen() */ }
         composable(Routes.PARAMETERS) { /* TODO ParametersScreen() */ }
         composable(Routes.SETTINGS) { /* TODO SettingsScreen() */ }
