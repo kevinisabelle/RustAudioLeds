@@ -135,19 +135,18 @@ fn animate_leds(frequency_levels: &Arc<Mutex<FrequenciesValues>>, settings_arc: 
 
     if (settings.display_mode == DisplayMode::Oscilloscope){
         
-        
-        
-        
     } else {
         for i in 0..nb_frequency_levels {
             let level = frequency_levels.lock().unwrap()[i].average();
             let max = frequency_levels.lock().unwrap()[i].max();
             let strip_colors = get_strip_colors(level, max, &settings.clone(), i);
             output_colors_to_buffer(&mut buf, &strip_colors, i);
+            
         }
     }
 
     buf.push(END_MARKER);
+    settings_arc.lock().unwrap().led_buffer[..buf.len()].copy_from_slice(&buf);
 
     port.write_all(&buf).unwrap();
     port.flush().unwrap();

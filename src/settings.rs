@@ -113,7 +113,7 @@ pub fn get_config() -> Settings {
         color1_object: color_from_string("blue"),
         color2_object: color_from_string("red"),
         color3_object: color_from_string("magenta"),
-        led_buffer: vec![0; 3 * 22 + 1], // Assuming 22 LEDs, 3 bytes per LED + 1 end marker
+        led_buffer: vec![0; 3 * 22 * 12 + 1], // Assuming 22 LEDs, 3 bytes per LED + 1 end marker
     };
 
     let mut args = std::env::args();

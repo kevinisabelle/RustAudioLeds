@@ -23,6 +23,7 @@ use crate::bluetooth::fps_chrc::FpsChrc;
 // use crate::bluetooth::color3_chrc::Color3Chrc;
 use crate::bluetooth::fft_size_chrc::FftSizeChrc;
 use crate::bluetooth::led_count_chrc::{get_led_count_chrc, LedCountChrc};
+use crate::bluetooth::leds_buffer2_chrc::{get_led_buffer2_chrc, LedBuffer2Chrc};
 use crate::bluetooth::leds_buffer_chrc::{get_led_buffer_chrc, LedBufferChrc};
 use crate::settings::Settings;
 // use crate::bluetooth::frequencies_chrc::FrequenciesChrc;
@@ -43,6 +44,7 @@ pub struct VisualizerService {
     // 13 characteristics – added lazily when constructed elsewhere
     pub led_count: Option<Arc<Mutex<LedCountChrc>>>,
     pub led_buffer_chrc: Option<Arc<Mutex<LedBufferChrc>>>,
+    pub led_buffer2_chrc: Option<Arc<Mutex<LedBuffer2Chrc>>>,
     pub smooth_size_chrc:   Option<Arc<Mutex<SmoothSizeChrc>>>,
     pub gain_chrc:          Option<Arc<Mutex<GainChrc>>>,
     pub fps_chrc:           Option<Arc<Mutex<FpsChrc>>>,
@@ -75,6 +77,7 @@ object_path! {
                 fps_chrc:            None,
                 led_count:           None,
                 led_buffer_chrc:     None,
+                led_buffer2_chrc:    None,
                 //color1_chrc:         None,
                 //color2_chrc:         None,
                 //color3_chrc:         None,
@@ -104,6 +107,7 @@ object_path! {
             extend_option_prop!(&self.fps_chrc,            properties);
             extend_option_prop!(&self.led_count,           properties);
             extend_option_prop!(&self.led_buffer_chrc,     properties);
+            extend_option_prop!(&self.led_buffer2_chrc,    properties);
             //extend_option_prop!(&self.color1_chrc,         properties);
             //extend_option_prop!(&self.color2_chrc,         properties);
             //extend_option_prop!(&self.color3_chrc,         properties);
@@ -177,6 +181,20 @@ pub async fn get_visualizer_service(
         .add_characteristic_path(led_buffer_chrc.lock().unwrap().object_path().clone());
     
     visualizer_service.lock().unwrap().led_buffer_chrc = Some(led_buffer_chrc.clone());
+
+    let led_buffer2_chrc = get_led_buffer2_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(led_buffer2_chrc.lock().unwrap().object_path().clone());
+
+    // Add the second LED buffer characteristic
+    visualizer_service.lock().unwrap().led_buffer2_chrc = Some(led_buffer2_chrc.clone());
 
     let visualizer_service_interface = VisualizerServiceInterface(visualizer_service.clone());
     let visualizer_service_object_path = visualizer_service.lock().unwrap().object_path().clone();

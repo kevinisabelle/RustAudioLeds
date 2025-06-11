@@ -1,5 +1,6 @@
 ﻿package com.kevinisabelle.visualizerui.ui.screens
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -108,13 +109,15 @@ class ScanViewModel @Inject constructor(
 
     fun refresh() = scan()
 
+    @SuppressLint("MissingPermission")
     private fun scan() = viewModelScope.launch {
         _ui.update { it.copy(state = ScanUi.Scanning, devices = emptyList(), canRefresh = false) }
         when (val result = repo.scanOnce()) {           // suspend fun using Flow internally
             is ScanResult.Success -> _ui.update {
+                val filteredDevices = result.devices.filter { it.device?.name?.isNotEmpty() == true && it.device.name.startsWith("Led") }
                 it.copy(
                     state = ScanUi.DeviceList,
-                    devices = result.devices,
+                    devices = filteredDevices,
                     canRefresh = true
                 )
             }

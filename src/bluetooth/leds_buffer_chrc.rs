@@ -1,7 +1,6 @@
 ﻿//! LED-Visualizer – “LED Buffer” characteristic
 //!
-//! A `792 B` buffer that provides a snapshot of all pixels in physical order.
-//! This represents 264 RGB888 pixels.
+//! A `500` byte buffer that provides a snapshot of the first 500 bytes of the LED buffer.
 //!
 //! Flags: **read**
 //
@@ -69,9 +68,11 @@ impl LedBufferChrcInterface {
         &self,
         _options: HashMap<String, OwnedValue>,
     ) -> zbus::fdo::Result<Vec<u8>> {
-        // Assuming self.0.lock().unwrap().settings.lock().unwrap().led_buffer is Vec<u8>
+        // Return the first 500 bytes of the LED buffer
         let buffer_value = self.0.lock().unwrap().settings.lock().unwrap().led_buffer.clone();
+        let buffer_value = buffer_value.into_iter().take(500).collect::<Vec<u8>>();
         println!("LED Buffer read ({} bytes)", buffer_value.len());
+        // println!("LED Buffer content (HEX): {:?}", buffer_value.iter().map(|b| format!("{:02x}", b)).collect::<Vec<String>>());
         Ok(buffer_value)
     }
 

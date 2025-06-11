@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.ui.text.style.TextAlign
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -50,6 +51,9 @@ fun DashboardScreen(
                     IconButton(onClick = { navController.navigate("presets") }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "More")
                     }
+                    IconButton(onClick = { viewModel.refresh() }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                    }
                 }
             )
         },
@@ -64,7 +68,7 @@ fun DashboardScreen(
     ) { inner ->
         Box(
             Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(inner),
             contentAlignment = Alignment.Center
         ) {
@@ -81,7 +85,7 @@ fun DashboardScreen(
                     rows = 12,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(22f / 12f)
+                        .aspectRatio(22f / 12f, matchHeightConstraintsFirst = true)
                 )
             }
         }
@@ -100,13 +104,16 @@ private fun LedPreview(
         if (colors.isEmpty()) return@Canvas
         val cellW = size.width / columns
         val cellH = size.height / rows
-        for (y in 0 until rows) {
             for (x in 0 until columns) {
-                val idx = y * columns + x
+            for (y in 0 until rows) {
+                val idx = x * rows + y
                 if (idx < colors.size) {
+                    val isEvenColumns = x % 2 == 0
+                    // If is odd column, reverse the y index
+                    val yReversed = if (isEvenColumns) rows - 1 - y else y
                     drawRect(
                         color = colors[idx],
-                        topLeft = androidx.compose.ui.geometry.Offset(x * cellW, y * cellH),
+                        topLeft = androidx.compose.ui.geometry.Offset(x * cellW, yReversed * cellH),
                         size = Size(cellW, cellH)
                     )
                 }
@@ -121,6 +128,7 @@ private fun QuickControls(
     gain: Float,
     onToggleRunning: () -> Unit,
     onGainChange: (Float) -> Unit,
+    viewModel: DashboardViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
     Column(Modifier.fillMaxWidth()) {
         Row(
@@ -136,7 +144,8 @@ private fun QuickControls(
                     contentDescription = if (running) "Pause" else "Play"
                 )
             }
-            Text("Brightness", modifier = Modifier.weight(1f))
+
+            Text("Gain", modifier = Modifier.weight(1f))
             Slider(
                 value = gain,
                 onValueChange = onGainChange,
@@ -165,12 +174,12 @@ class DashboardViewModel @Inject constructor(
     private val _ui = MutableStateFlow(Ui())
     val ui: StateFlow<Ui> = _ui
 
-    init {
-        viewModelScope.launch {
-            repo.ledBufferFlow().collectLatest { rgbList ->
-                _ui.update { it.copy(ledColors = rgbList.map { rgb -> Color(rgb) }) }
-            }
-        }
+    fun refresh() = refreshLedColors()
+
+    private fun refreshLedColors() = viewModelScope.launch {
+        val rgbList = repo.getLedColors()
+        _ui.update { it.copy(ledColors = rgbList.map { rgb -> Color(rgb or 0xFF000000.toInt()) }) }
+        // println("LED colors updated: ${_ui.value.ledColors.size} LEDs")
     }
 
     fun toggleRunning() {

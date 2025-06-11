@@ -76,7 +76,8 @@ fun ConnectingScreen(
         TopAppBar(
             title = { Text("Connecting…") },
             actions = {
-                IconButton(onClick = { viewModel.cancel(); navController.popBackStack() }) {
+                val scope = rememberCoroutineScope()
+                IconButton(onClick = { scope.launch { viewModel.cancel() }; navController.popBackStack() }) {
                     Icon(Icons.Default.Close, contentDescription = "Cancel")
                 }
             })
@@ -139,7 +140,7 @@ class ConnectingViewModel @Inject constructor(
         }
     }
 
-    fun cancel() {
+    suspend fun cancel() {
         repo.cancelConnect()
         // Optionally, update UI state to reflect cancellation initiated by user
         // _ui.update { it.copy(progressMessage = "Cancelling connection...", done = false) }

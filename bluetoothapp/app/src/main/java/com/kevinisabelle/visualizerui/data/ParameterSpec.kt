@@ -36,6 +36,10 @@ sealed interface ParameterSpec<T : Any> {
     object LedCount   : ParameterSpec<UShort>   { override val uuid = visualizerUuid(0x000E) }
     object LedsBuffer:  ParameterSpec<ByteArray> {
         override val uuid = visualizerUuid(0x000F)
-        const val SIZE = 792 // 264 × RGB888
+        const val SIZE = 500 // 264 × RGB888
+    }
+    object LedsBuffer2: ParameterSpec<ByteArray> {
+        override val uuid = visualizerUuid(0x0010)
+        const val SIZE = 792 - 500 // 264 × RGB888
     }
 }
