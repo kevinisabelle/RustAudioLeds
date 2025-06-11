@@ -43,14 +43,20 @@ class BleVisualizerDevice private constructor(
     @SuppressLint("MissingPermission")
     suspend fun <T : Any> write(spec: ParameterSpec<T>, value: T) {
         doGattIo {
+            println("Attempting to write to characteristic ${spec.uuid} with value: $value (no response)...")
             val ch = ch(spec)
             ch.value = encode(spec, value)
             ch.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-            gatt.writeCharacteristic(ch)
-            eventFlow.first { it is GattEvent.Result &&
-                    it.type == ResultType.Write &&
-                    it.uuid == spec.uuid }
-            Unit
+
+            if (!gatt.writeCharacteristic(ch)) {
+                // This means the write operation could not even be initiated.
+                throw IllegalStateException("Failed to initiate write operation for characteristic ${spec.uuid}")
+            }
+
+            // For WRITE_TYPE_NO_RESPONSE, the onCharacteristicWrite callback is not triggered.
+            // If gatt.writeCharacteristic(ch) returns true, the operation was successfully initiated.
+            // There will be no further confirmation from the BLE stack for this type of write.
+            println("Write (no response) to characteristic ${spec.uuid} initiated successfully.")
         }
     }
 

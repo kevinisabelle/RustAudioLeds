@@ -1,32 +1,40 @@
 ﻿package com.kevinisabelle.visualizerui.ui.screens
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.Pattern
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import com.kevinisabelle.visualizerui.ble.BleVisualizerRepository
+import com.kevinisabelle.visualizerui.ui.components.LedPreview
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /** ****************************
  * Dashboard composable & VM
@@ -49,29 +57,21 @@ fun DashboardScreen(
                         Icon(Icons.Default.Tune, contentDescription = "Parameters")
                     }
                     IconButton(onClick = { navController.navigate("presets") }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More")
+                        Icon(Icons.Default.Pattern, contentDescription = "More")
                     }
                     IconButton(onClick = { viewModel.refresh() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }
                 }
             )
-        },
-        bottomBar = {
-            QuickControls(
-                running = ui.running,
-                gain = ui.gain,
-                onToggleRunning = { viewModel.toggleRunning() },
-                onGainChange = { viewModel.setGain(it) }
-            )
         }
     ) { inner ->
-        Box(
+        Column(
             Modifier
                 .fillMaxWidth()
-                .padding(inner),
-            contentAlignment = Alignment.Center
+                .padding(inner)
         ) {
+
             if (ui.ledColors.isEmpty()) {
                 Text(
                     text = "Waiting for data…",
@@ -87,71 +87,19 @@ fun DashboardScreen(
                         .fillMaxWidth()
                         .aspectRatio(22f / 12f, matchHeightConstraintsFirst = true)
                 )
-            }
-        }
-    }
-}
 
-/** Draws the LED matrix as coloured squares. */
-@Composable
-private fun LedPreview(
-    colors: List<Color>,
-    columns: Int,
-    rows: Int,
-    modifier: Modifier = Modifier
-) {
-    Canvas(modifier) {
-        if (colors.isEmpty()) return@Canvas
-        val cellW = size.width / columns
-        val cellH = size.height / rows
-            for (x in 0 until columns) {
-            for (y in 0 until rows) {
-                val idx = x * rows + y
-                if (idx < colors.size) {
-                    val isEvenColumns = x % 2 == 0
-                    // If is odd column, reverse the y index
-                    val yReversed = if (isEvenColumns) rows - 1 - y else y
-                    drawRect(
-                        color = colors[idx],
-                        topLeft = androidx.compose.ui.geometry.Offset(x * cellW, yReversed * cellH),
-                        size = Size(cellW, cellH)
+                Row(
+                    modifier = Modifier.padding(5.dp),
+                ) {
+                    Text("Gain", modifier = Modifier.weight(1f))
+                    Slider(
+                        value = ui.gain,
+                        onValueChange = { viewModel.setGain(it) },
+                        valueRange = 1f..25f,
+                        modifier = Modifier.weight(3f)
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun QuickControls(
-    running: Boolean,
-    gain: Float,
-    onToggleRunning: () -> Unit,
-    onGainChange: (Float) -> Unit,
-    viewModel: DashboardViewModel = androidx.hilt.navigation.compose.hiltViewModel()
-) {
-    Column(Modifier.fillMaxWidth()) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            IconButton(onClick = onToggleRunning) {
-                Icon(
-                    if (running) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = if (running) "Pause" else "Play"
-                )
-            }
-
-            Text("Gain", modifier = Modifier.weight(1f))
-            Slider(
-                value = gain,
-                onValueChange = onGainChange,
-                valueRange = 0f..1f,
-                modifier = Modifier.weight(3f)
-            )
         }
     }
 }
@@ -187,8 +135,8 @@ class DashboardViewModel @Inject constructor(
         _ui.update { it.copy(running = !it.running) }
     }
 
-    fun setGain(b: Float) {
-        viewModelScope.launch { repo.setGain(b) }
+    fun setGain(b: Float) = viewModelScope.launch {
+        repo.setGain(b)
         _ui.update { it.copy(gain = b) }
     }
 }

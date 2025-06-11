@@ -1,6 +1,5 @@
 ﻿package com.kevinisabelle.visualizerui.ui.components
 
-import android.bluetooth.BluetoothDevice
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,11 +14,11 @@ import androidx.compose.ui.unit.dp
 import com.kevinisabelle.visualizerui.ble.ScannedDevice
 
 @Composable
-private fun DeviceRow(
+fun DeviceRow(
     device: ScannedDevice,
-    onConnect: (BluetoothDevice) -> Unit
+    onConnect: (ScannedDevice) -> Unit
 ) = Card(
-    onClick = { onConnect(device.device) },
+    onClick = { onConnect(device) },
     modifier = Modifier
         .fillMaxWidth()
         .padding(horizontal = 16.dp, vertical = 4.dp)

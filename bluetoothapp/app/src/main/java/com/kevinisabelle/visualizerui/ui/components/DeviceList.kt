@@ -1,14 +1,10 @@
 ﻿package com.kevinisabelle.visualizerui.ui.components
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import com.kevinisabelle.visualizerui.ble.ScannedDevice
 
 @Composable
@@ -19,13 +15,50 @@ fun DeviceList(
 ) {
     LazyColumn(modifier = modifier) {
         items(devices) { device ->
-            Text(
-                text = device.toString(), // Replace with actual device property e.g. device.name
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onConnect(device) }
-                    .padding(16.dp)
+            DeviceRow(
+                device = device,
+                onConnect = onConnect
             )
         }
     }
+}
+
+@Preview
+@Composable
+fun DeviceListPreview() {
+    DeviceList(
+        devices = run {
+            val bluetoothAdapter: android.bluetooth.BluetoothAdapter? = try {
+                android.bluetooth.BluetoothAdapter.getDefaultAdapter()
+            } catch (e: Throwable) {
+                null // Catch any unexpected errors during getDefaultAdapter
+            }
+
+            if (bluetoothAdapter != null) {
+                try {
+                    val address1 = "00:11:22:33:44:55"
+                    val address2 = "AA:BB:CC:DD:EE:FF" // Using a different valid MAC address
+
+                    val btDevice1 = bluetoothAdapter.getRemoteDevice(address1)
+                    val btDevice2 = bluetoothAdapter.getRemoteDevice(address2)
+
+                    listOf(
+                        ScannedDevice(btDevice1, "LedVisualizer", -50),
+                        ScannedDevice(btDevice2, "Some Random device", -60),
+                        ScannedDevice(btDevice2, "Some Random device 2", -90)
+                    )
+                } catch (e: SecurityException) {
+                    // Handle SecurityException (e.g., on API 31+ if BLUETOOTH_CONNECT is missing)
+                    emptyList<ScannedDevice>() // Fallback to an empty list
+                } catch (e: IllegalArgumentException) {
+                    // Handle IllegalArgumentException (if MAC address format is invalid)
+                    emptyList<ScannedDevice>() // Fallback to an empty list
+                }
+            } else {
+                // BluetoothAdapter is not available
+                emptyList<ScannedDevice>() // Fallback to an empty list
+            }
+        },
+        onConnect = {}
+    )
 }
