@@ -1,7 +1,7 @@
 ﻿use std::sync::{Arc, Mutex};
 use crate::color::{color_from_string, Color};
 use crate::DEFAULT_SMOOTH_SIZE;
-use crate::constants::{DEFAULT_SKEW, FFT_SIZE, FPS, GAIN};
+use crate::constants::{DEFAULT_SKEW, FFT_SIZE, FPS, GAIN, SAMPLE_RATE};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum DisplayMode {
@@ -39,56 +39,16 @@ pub struct Settings  {
     pub display_mode: DisplayMode,
     pub animation_mode: AnimationMode,
     pub led_buffer: Vec<u8>,
+    pub cached_df: f32
 }
 
-pub struct SamplesWindow
+impl Settings
 {
-    pub samples: Arc<Mutex<Vec<f32>>>,
-    max_size: usize,
-}
-
-impl SamplesWindow {
-    pub fn new(max_size: usize) -> Self {
-        SamplesWindow {
-            samples: Arc::new(Mutex::new(Vec::with_capacity(max_size))),
-            max_size,
-        }
-    }
-
-    pub fn add_sample(&mut self, sample: f32) {
-        let mut samples = self.samples.lock().unwrap();
-        if samples.len() >= self.max_size {
-            samples.remove(0);
-        }
-        samples.push(sample);
-    }
-
-    pub fn add_samples(&mut self, samples: &[f32]) {
-        for sample in samples {
-            self.add_sample(*sample);
-        }
-    }
-
-    pub fn average(&self) -> f32 {
-        let samples = self.samples.lock().unwrap();
-        if samples.is_empty() {
-            0.0
-        } else {
-            samples.iter().copied().sum::<f32>() / samples.len() as f32
-        }
-    }
-
-    pub fn max(&self) -> f32 {
-        let samples = self.samples.lock().unwrap();
-        if samples.is_empty() {
-            0.0
-        } else {
-            *samples.iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap()
-        }
+    pub fn set_fft_size(&mut self, fft_size: usize) {
+        self.fft_size = fft_size;
+        self.cached_df = SAMPLE_RATE as f32 / self.fft_size as f32
     }
 }
-
-pub type FrequenciesValues = Vec<SamplesWindow>;
 
 pub fn get_config() -> Settings {
 
@@ -113,8 +73,11 @@ pub fn get_config() -> Settings {
         color1_object: color_from_string("blue"),
         color2_object: color_from_string("red"),
         color3_object: color_from_string("magenta"),
-        led_buffer: vec![0; 3 * 22 * 12 + 1], // Assuming 22 LEDs, 3 bytes per LED + 1 end marker
+        led_buffer: vec![0; 3 * 22 * 12 + 1], // Assuming 22 LEDs, 3 bytes per LED + 1 end marker,
+        cached_df: 0.0,
     };
+
+    settings.set_fft_size(FFT_SIZE);
 
     let mut args = std::env::args();
     while let Some(arg) = args.next() {
@@ -160,6 +123,7 @@ pub fn get_config() -> Settings {
             "--fft_size" | "-F" => {
                 if let Some(val) = args.next() {
                     settings.fft_size = val.parse().unwrap_or(FFT_SIZE);
+                    settings.set_fft_size(settings.fft_size);
                 }
             }
             "--brightness" | "-b" => {

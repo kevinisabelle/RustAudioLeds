@@ -1,7 +1,108 @@
-﻿use std::sync::Arc;
-use crate::color::{color_from_string, Color};
-use crate::constants::LEDS_PER_STRIP;
-use crate::settings::Settings;
+﻿use crate::color::{Color, BLACK};
+use crate::constants::{END_MARKER, LEDS_PER_STRIP, NUM_LEDS};
+use crate::settings::{AnimationMode, DisplayMode, Settings};
+use crate::values::{SamplesWindow, StateValues};
+use std::sync::{Arc, Mutex};
+use std::thread::sleep;
+use std::time::Duration;
+
+pub fn animate_leds(state_values: &Arc<Mutex<StateValues>>, settings_arc: &Arc<Mutex<Settings>>, port: &mut dyn serialport::SerialPort) {
+
+    let frequency_levels = state_values.lock().unwrap().frequencies.clone();
+    let settings = settings_arc.lock().unwrap().clone();
+    let frame_delay = Duration::from_millis(1_000 / settings.fps);
+
+    let mut buf = Vec::with_capacity(NUM_LEDS * 3 + 1);
+    let nb_frequency_levels = settings_arc.lock().unwrap().frequencies.len();
+    let sample_to_average = settings_arc.lock().unwrap().smooth_size;
+
+    if (settings.display_mode == DisplayMode::Oscilloscope){
+
+    } else {
+        for freq in 0..nb_frequency_levels {
+            let level = frequency_levels[freq].average(sample_to_average);
+            // println!("Frequency {}: Level: {:.3}", freq, level);
+            let max = frequency_levels[freq].max(sample_to_average);
+            let strip_colors = get_strip_colors(level, max, &settings.clone(), freq);
+            output_colors_to_buffer(&mut buf, &strip_colors, freq);
+        }
+    }
+
+    buf.push(END_MARKER);
+    settings_arc.lock().unwrap().led_buffer[..buf.len()].copy_from_slice(&buf);
+
+    port.write_all(&buf).unwrap();
+    port.flush().unwrap();
+
+    sleep(frame_delay);
+}
+
+fn output_colors_to_buffer(buf: &mut Vec<u8>, colors: &Vec<Color>, index: usize) {
+    let is_reversed = index % 2 == 1;
+
+    let ordered_colors = if is_reversed {
+        colors.iter().rev().cloned().collect::<Vec<_>>()
+    } else {
+        colors.to_vec()
+    };
+
+    for color in ordered_colors {
+        buf.extend_from_slice(&color.to_slice());
+    }
+}
+
+fn get_strip_colors(level: f32, max: f32, settings: &Settings, index: usize) -> Vec<Color> {
+
+    let mut strip_colors = vec![BLACK; LEDS_PER_STRIP];
+    let freq_gain = settings.gains[index];
+    let level_adjusted = level * settings.gain * freq_gain;
+    let max_adjusted = max * settings.gain * freq_gain;
+
+    match settings.display_mode
+    {
+        DisplayMode::Spectrum => {
+
+            match settings.animation_mode
+            {
+                AnimationMode::Full =>
+                    {
+                        full_spectrum(level_adjusted, index, settings, &mut strip_colors);
+                    }
+                AnimationMode::FullWithMax =>
+                    {
+                        full_spectrum_with_max(level_adjusted, max_adjusted, index, settings, &mut strip_colors);
+                    }
+                AnimationMode::Points =>
+                    {
+                        points_spectrum(level_adjusted, index, settings, &mut strip_colors);
+                    }
+                AnimationMode::FullMiddle =>
+                    {
+                        spectrum_middle(level_adjusted, index, settings, &mut strip_colors);
+                    }
+                AnimationMode::FullMiddleWithMax =>
+                    {
+                        spectrum_middle_with_max(level_adjusted, max_adjusted, index, settings, &mut strip_colors);
+                    }
+                _ => {
+                    full_spectrum(level_adjusted, index, settings, &mut strip_colors);
+                }
+            }
+        }
+        DisplayMode::Oscilloscope => {
+
+        }
+        DisplayMode::ColorGradient => {
+            for i in 0..LEDS_PER_STRIP {
+                let mix_factor = (i+1) as f32 / LEDS_PER_STRIP as f32;
+                let color = settings.color1_object.clone().mix(&settings.color2_object.clone(), mix_factor);
+                strip_colors[i] = color.clone();
+            }
+        }
+    }
+
+    strip_colors
+}
 
 pub fn full_spectrum(
     level: f32,

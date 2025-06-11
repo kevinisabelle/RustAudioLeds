@@ -2,30 +2,33 @@
 use spectrum_analyzer::{samples_fft_to_spectrum, FrequencyLimit};
 use spectrum_analyzer::scaling::divide_by_N_sqrt;
 use crate::constants::SAMPLE_RATE;
-use crate::settings::{FrequenciesValues, SamplesWindow, Settings};
+use crate::settings::{Settings};
+use crate::values::{FrequenciesValues, SamplesWindow, StateValues};
 
 pub fn process_audio_data(
     data: &[f32],
-    frequency_levels: &Arc<Mutex<FrequenciesValues>>,
-    settings: &Settings,
-    samples_window: &Arc<Mutex<SamplesWindow>>,
-    df: f32,
+    state_values: &Arc<Mutex<StateValues>>,
+    settings: &Settings
 ) {
     // println!("Processing audio data... settings = {:?}", settings);
     // println!("Frequency levels length: {}", frequency_levels.lock().unwrap().len());
+    let df = settings.cached_df; // frequency bin width
 
+    // Print the buffer size for debugging
+    // println!("Samples buffer content: {:?}", data);
+    
     // 1.  Move samples into the rolling window
     {
-        let mut win = samples_window.lock().unwrap();
-        win.add_samples(data);
-        if win.samples.lock().unwrap().len() < settings.fft_size {
+        state_values.lock().unwrap().samples_window.add_samples(data);
+        if state_values.lock().unwrap().samples_window.samples.lock().unwrap().len() < settings.fft_size {
+            println!("Not enough samples for FFT: {} < {}", state_values.lock().unwrap().samples_window.samples.lock().unwrap().len(), settings.fft_size);
             return;                       // not enough for one FFT yet
         }
     }
 
     // 2.  FFT → linear magnitude spectrum (already √N-normalised)
     let spec = samples_fft_to_spectrum(
-        &samples_window.lock().unwrap().samples.lock().unwrap(),
+        &state_values.lock().unwrap().samples_window.samples.lock().unwrap(),
         SAMPLE_RATE,
         FrequencyLimit::All,
         Some(&divide_by_N_sqrt),
@@ -46,7 +49,7 @@ pub fn process_audio_data(
         }
         let mut v = if n > 0 { acc / n as f32 } else { 0.0 };
         v *= weight(f_cfg, settings.skew);                           // high-freq boost
-        frequency_levels.lock().unwrap()[i].add_sample(v);  // smooth between frames
+        state_values.lock().unwrap().frequencies[i].add_sample(v);  // smooth between frames
     }
 }
 
