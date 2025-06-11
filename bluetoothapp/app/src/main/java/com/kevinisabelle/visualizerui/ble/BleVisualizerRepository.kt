@@ -6,7 +6,10 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanSettings
 import android.content.Context
+import com.kevinisabelle.visualizerui.data.AnimationMode
+import com.kevinisabelle.visualizerui.data.DisplayMode
 import com.kevinisabelle.visualizerui.data.ParameterSpec
+import com.kevinisabelle.visualizerui.services.Settings
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -103,17 +106,6 @@ class BleVisualizerRepository(
     }
 
     /**
-     * Sets the running state of the visualizer.
-     * @param running True to run the visualizer, false to pause.
-     */
-    suspend fun setRunning(running: Boolean) {
-
-        // Do nothing for now
-        // as the running state is not implemented in the device.
-
-    }
-
-    /**
      * Sets the gain/brightness of the visualizer.
      * @param gain The gain value (e.g., 0.0f to 1.0f).
      */
@@ -173,6 +165,30 @@ class BleVisualizerRepository(
 
         // println("LED colors fetched: $ledColors")
         return ledColors
+    }
+
+    suspend fun getSettings() : Settings {
+        var settings = Settings()
+
+        return withContext(Dispatchers.IO) {
+            settings = settings.copy(
+                fps = currentDevice?.read(ParameterSpec.Fps)?.toLong() ?: 30,
+                smoothSize = currentDevice?.read(ParameterSpec.SmoothSize)?.toInt() ?: 2,
+                fftSize = currentDevice?.read(ParameterSpec.FftSize)?.toInt() ?: 1024,
+                gain = currentDevice?.read(ParameterSpec.Gain) ?: 1.0f,
+                skew = currentDevice?.read(ParameterSpec.Skew) ?: 0.0f,
+                brightness = currentDevice?.read(ParameterSpec.Brightness) ?: 1.0f,
+                displayMode = currentDevice?.read(ParameterSpec.Display) ?: DisplayMode.Spectrum,
+                animationMode = currentDevice?.read(ParameterSpec.Animation) ?: AnimationMode.Full,
+                color1 = currentDevice?.read(ParameterSpec.Color(1)).let { it?.toHex() ?: "#FF0000" },
+                color2 = currentDevice?.read(ParameterSpec.Color(2)).let { it?.toHex() ?: "#00FF00" },
+                color3 = currentDevice?.read(ParameterSpec.Color(3)).let { it?.toHex() ?: "#0000FF" },
+                gains = currentDevice?.read(ParameterSpec.Gains)?.toList() ?: listOf(1.0f, 1.0f, 1.0f, 1.0f),
+                frequencies = currentDevice?.read(ParameterSpec.Frequencies)?.toList() ?: listOf(20f, 200f, 2000f, 20000f),
+                ledsCount = currentDevice?.read(ParameterSpec.LedCount)?.toInt() ?: 0
+            )
+            settings
+        }
     }
 
 }

@@ -24,21 +24,33 @@ class BleVisualizerDevice private constructor(
     private var servicesDiscoveredCompleter = CompletableDeferred<Unit>()
 
     @SuppressLint("MissingPermission")
-    suspend fun <T : Any> read(spec: ParameterSpec<T>): T = doGattIo {
+    suspend fun <T : Any> read(spec: ParameterSpec<T>): T? = doGattIo {
         println("Reading characteristic ${spec.uuid}...")
-        val ch = ch(spec)
-        gatt.readCharacteristic(ch)
-        val result = eventFlow.first { it is GattEvent.Result &&
-                it.type == ResultType.Read &&
-                it.uuid == spec.uuid } as GattEvent.Result
+        try {
+            val ch = ch(spec)
+            gatt.readCharacteristic(ch)
+            val result = eventFlow.first {
+                it is GattEvent.Result &&
+                        it.type == ResultType.Read &&
+                        it.uuid == spec.uuid
+            } as GattEvent.Result
 
-        if (result.status != BluetoothGatt.GATT_SUCCESS) {
-            throw IllegalStateException("Failed to read characteristic ${spec.uuid}: status ${result.status}")
+            if (result.status != BluetoothGatt.GATT_SUCCESS) {
+                throw IllegalStateException(
+                    "Failed to read characteristic ${spec.uuid}. Status: ${result.status}"
+                )
+            }
+            // decode needs to be inside the try block if ch is declared inside
+            println("Characteristic ${spec.uuid} read successfully.")
+            return@doGattIo decode(spec, ch.value ?: error("Characteristic ${spec.uuid} has no value!"))
         }
-
-        println("Characteristic ${spec.uuid} read successfully.")
-        decode(spec, ch.value ?: error("Characteristic ${spec.uuid} has no value!"))
+        catch (e: IllegalStateException) {
+            // If the read operation was cancelled or failed, or characteristic not found.
+            println("Read operation for characteristic ${spec.uuid} was cancelled or failed: ${e.message}")
+            return@doGattIo null
+        }
     }
+
 
     @SuppressLint("MissingPermission")
     suspend fun <T : Any> write(spec: ParameterSpec<T>, value: T) {

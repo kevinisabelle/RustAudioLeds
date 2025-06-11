@@ -6,6 +6,10 @@
  */
 @JvmInline
 value class Rgb888(val packed: UInt) {
+    fun toHex(): String {
+        return String.format("#%02X%02X%02X", r.toInt(), g.toInt(), b.toInt())
+    }
+
     val r: UByte get() = ((packed shr 16) and 0xFFu).toUByte()
     val g: UByte get() = ((packed shr  8) and 0xFFu).toUByte()
     val b: UByte get() = ( packed        and 0xFFu).toUByte()
