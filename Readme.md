@@ -7,7 +7,7 @@ The LED audio visualizer is a project that combines a Raspberry Pi, an Arduino, 
 - **Audio Processing**: The audio input is processed using Fast Fourier Transform (FFT) to extract frequency data.
 - **LED Control**: The Arduino controls a WS2812B LED strip, displaying visualizations based on the processed audio data connected via USB.
 - **Android App**: The app allows users to configure settings such as gain, color palette, and display modes, and to save presets for different visualizations.
-- **Bluetooth Connectivity**: The app communicates with the Arduino over Bluetooth Low Energy (BLE) GATT services to send configuration changes and receive real-time updates on the LED strip.
+- **Bluetooth Connectivity**: The app communicates with the Raspberry PI over Bluetooth Low Energy (BLE) GATT services to send configuration changes and receive real-time updates on the LED strip.
 
 ## Tech Stack
 - **Rust with Cross**: The Raspberry Pi application is written in Rust, utilizing the `cross` tool for cross-compilation.
