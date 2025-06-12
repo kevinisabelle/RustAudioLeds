@@ -1,0 +1,14 @@
+[Unit]
+Description=AudioLeds Service
+After=network.target sound.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/opt/leds
+ExecStart=/opt/leds/AudioLeds
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
