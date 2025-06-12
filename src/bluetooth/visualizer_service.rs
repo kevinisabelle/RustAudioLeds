@@ -22,6 +22,11 @@ use crate::bluetooth::chrc_gains::{get_gains_chrc, GainsChrc};
 use crate::bluetooth::chrc_led_count::{get_led_count_chrc, LedCountChrc};
 use crate::bluetooth::chrc_leds_buffer2::{get_led_buffer2_chrc, LedBuffer2Chrc};
 use crate::bluetooth::chrc_leds_buffer::{get_led_buffer_chrc, LedBufferChrc};
+use crate::bluetooth::chrc_presets_list::get_preset_list_chrc;
+use crate::bluetooth::chrc_presets_read::get_preset_read_chrc;
+use crate::bluetooth::chrc_presets_select::get_preset_select_index_chrc;
+use crate::bluetooth::chrc_presets_save::get_preset_save_chrc;
+use crate::bluetooth::chrc_presets_activate::get_preset_activate_chrc;
 use crate::bluetooth::chrc_skew::{get_skew_chrc, SkewChrc};
 use crate::settings::Settings;
 
@@ -325,6 +330,74 @@ pub async fn get_visualizer_service(
         .unwrap()
         .add_characteristic_path(led_buffer2_chrc.lock().unwrap().object_path().clone());
     visualizer_service.lock().unwrap().led_buffer2_chrc = Some(led_buffer2_chrc.clone());
+
+    /*| 14 Preset List         | 3E0E0011-…-C3E63                         | Read             | `u8 + (up to 24 × 17)`         | Returns up to 24 entries: `{id: u8, name[16]: UTF-8}`; first byte is count                                                   |
+| 15 Preset Select Index | 3E0E0012-…-C3E63                         | Read · Write WoR | `u8`                           | Sets or gets the selected preset index                                                                                       |
+| 16 Preset Read         | 3E0E0013-…-C3E63                         | Read             | `222 B`                        | Returns the selected preset's binary data                                                                                    |
+| 17 Preset Save         | 3E0E0014-…-C3E63                         | Write WoR        | `226 B`                        | Upload a new or updated preset.                                                                                              |
+| 18 Preset Activate     | 3E0E0015-…-C3E63                         | Write WoR        | `u8`                           | Activates a preset by `id` (0–23); system applies it immediately                                                             |
+*/
+
+    // ------ Preset List characteristic ------
+    let preset_list_chrc = get_preset_list_chrc(
+        connection,
+        visualizer_service_path.clone()
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(preset_list_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().add_characteristic_path(preset_list_chrc.lock().unwrap().object_path().clone());
+
+    // ------ Preset Select Index characteristic ------
+    let preset_select_index_chrc = get_preset_select_index_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(preset_select_index_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().add_characteristic_path(preset_select_index_chrc.lock().unwrap().object_path().clone());
+
+    // ------ Preset Read characteristic ------
+    let preset_read_chrc = get_preset_read_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(preset_read_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().add_characteristic_path(preset_read_chrc.lock().unwrap().object_path().clone());
+
+    // ------ Preset Save characteristic ------
+    let preset_save_chrc = get_preset_save_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(preset_save_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().add_characteristic_path(preset_save_chrc.lock().unwrap().object_path().clone());
+
+    // ------ Preset Activate characteristic ------
+    let preset_activate_chrc = get_preset_activate_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(preset_activate_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().add_characteristic_path(preset_activate_chrc.lock().unwrap().object_path().clone());
+
+
 
     // ------ Service registration ------
     let visualizer_service_interface = VisualizerServiceInterface(visualizer_service.clone());

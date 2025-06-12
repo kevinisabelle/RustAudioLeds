@@ -1,23 +1,26 @@
 ﻿use std::sync::{Arc, Mutex};
+use serde::{Deserialize, Serialize};
 use crate::color::{color_from_string, Color};
 use crate::DEFAULT_SMOOTH_SIZE;
 use crate::constants::{DEFAULT_SKEW, FFT_SIZE, FPS, GAIN, SAMPLE_RATE};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[repr(u8)]
 pub enum DisplayMode {
-    Spectrum,
-    Oscilloscope,
-    ColorGradient,
+    Spectrum = 0,
+    Oscilloscope = 1,
+    ColorGradient = 2,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[repr(u8)]
 pub enum AnimationMode {
-    Full,
-    FullWithMax,
-    Points,
-    FullMiddle,
-    FullMiddleWithMax,
-    PointsMiddle,
+    Full = 0,
+    FullWithMax = 1,
+    Points = 2,
+    FullMiddle = 3,
+    FullMiddleWithMax = 4,
+    PointsMiddle = 5,
 }
 
 #[derive(Debug, Clone)]
@@ -36,7 +39,9 @@ pub struct Settings  {
     pub display_mode: DisplayMode,
     pub animation_mode: AnimationMode,
     pub led_buffer: Vec<u8>,
-    pub cached_df: f32
+    pub cached_df: f32,
+    pub selected_preset: usize,
+    pub active_preset: usize,
 }
 
 impl Settings
@@ -69,6 +74,8 @@ pub fn get_config() -> Settings {
         animation_mode: AnimationMode::Full,
         led_buffer: vec![0; 3 * 22 * 12 + 1], // Assuming 22 LEDs, 3 bytes per LED + 1 end marker,
         cached_df: 0.0,
+        selected_preset: 0,
+        active_preset: 255,
     };
 
     settings.set_fft_size(FFT_SIZE);

@@ -6,6 +6,7 @@ mod dsp;
 mod bluetooth;
 mod bluez;
 mod values;
+mod presets;
 
 use crate::animations::animate_leds;
 use crate::bluetooth::registration::create_advertisement;
@@ -19,7 +20,10 @@ use crate::settings::{display_usage, get_config};
 use crate::values::StateValues;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::StreamConfig;
-use std::{sync::{Arc, Mutex}, thread, time::Duration};
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::thread;
+use std::time::Duration;
 use zbus::Connection;
 
 #[tokio::main]

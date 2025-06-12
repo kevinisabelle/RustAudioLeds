@@ -63,11 +63,11 @@ pub fn process_audio_data(
 /// alpha=0.0  → flat,   alpha>0 → boost highs,   alpha<0 → boost lows.
 /// Typical values: alpha = 0.35 … 0.55 gives a gentle but audible lift of everything above ~1 kHz.
 pub fn weight(freq_hz: f32, alpha: f32) -> f32 {
-    let F_MIN: f32 = 0.0; // min frequency
-    let F_MAX: f32 = SAMPLE_RATE as f32 / 2.0; // Nyquist frequency
+    let f_min: f32 = 0.0; // min frequency
+    let f_max: f32 = SAMPLE_RATE as f32 / 2.0; // Nyquist frequency
 
     // normalised [0,1] then exponential
-    let x = ((freq_hz - F_MIN) / (F_MAX - F_MIN)).clamp(0.0, 1.0);
+    let x = ((freq_hz - f_min) / (f_max - f_min)).clamp(0.0, 1.0);
     x.powf(alpha)
 }
 

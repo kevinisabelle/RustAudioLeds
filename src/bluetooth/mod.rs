@@ -15,3 +15,8 @@ mod chrc_color;
 mod chrc_animation_mode;
 mod chrc_display_mode;
 mod chrc_skew;
+mod chrc_presets_list;
+mod chrc_presets_select;
+mod chrc_presets_read;
+mod chrc_presets_save;
+mod chrc_presets_activate;

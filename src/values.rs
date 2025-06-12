@@ -1,5 +1,4 @@
 ﻿use std::sync::{Arc, Mutex};
-use crate::constants::FFT_SIZE;
 use crate::settings::{Settings};
 
 #[derive(Debug, Clone)]
@@ -24,11 +23,7 @@ impl StateValues {
     }
 
     pub fn update_settings(&mut self, settings: Arc<Mutex<Settings>>) {
-
-        let smooth_size = settings.lock().unwrap().smooth_size;
-
         let nb_frequencies = settings.lock().unwrap().frequencies.len();
-
         self.frequencies.reserve(nb_frequencies);
         for _ in 0..nb_frequencies {
             self.frequencies.push(SamplesWindow::new(100));
