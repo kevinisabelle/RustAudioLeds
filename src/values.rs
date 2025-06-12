@@ -15,7 +15,7 @@ impl StateValues {
 
         let mut result = StateValues {
             frequencies : Vec::new(),
-            samples_window: SamplesWindow::new(FFT_SIZE),
+            samples_window: SamplesWindow::new(1024*8),
         };
 
         result.update_settings(settings);
@@ -31,7 +31,7 @@ impl StateValues {
 
         self.frequencies.reserve(nb_frequencies);
         for _ in 0..nb_frequencies {
-            self.frequencies.push(SamplesWindow::new(smooth_size));
+            self.frequencies.push(SamplesWindow::new(100));
         }
     }
 }
@@ -70,7 +70,8 @@ impl SamplesWindow {
         if samples.is_empty() {
             0.0
         } else {
-            let sum: f32 = samples.iter().take(size).sum();
+            // take size items from the end of the vector
+            let sum: f32 = samples.iter().rev().take(size).rev().sum();
             sum / size as f32
         }
     }

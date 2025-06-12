@@ -55,6 +55,7 @@ class BleVisualizerDevice private constructor(
     @SuppressLint("MissingPermission")
     suspend fun <T : Any> write(spec: ParameterSpec<T>, value: T) {
         doGattIo {
+            try {
             println("Attempting to write to characteristic ${spec.uuid} with value: $value (no response)...")
             val ch = ch(spec)
             ch.value = encode(spec, value)
@@ -62,13 +63,17 @@ class BleVisualizerDevice private constructor(
 
             if (!gatt.writeCharacteristic(ch)) {
                 // This means the write operation could not even be initiated.
-                throw IllegalStateException("Failed to initiate write operation for characteristic ${spec.uuid}")
+                    println("Failed to initiate write operation for characteristic ${spec.uuid}")
+                    return@doGattIo
             }
 
             // For WRITE_TYPE_NO_RESPONSE, the onCharacteristicWrite callback is not triggered.
             // If gatt.writeCharacteristic(ch) returns true, the operation was successfully initiated.
             // There will be no further confirmation from the BLE stack for this type of write.
             println("Write (no response) to characteristic ${spec.uuid} initiated successfully.")
+            } catch (e: Exception) {
+                println("Error writing to characteristic ${spec.uuid}: ${e.message}")
+            }
         }
     }
 

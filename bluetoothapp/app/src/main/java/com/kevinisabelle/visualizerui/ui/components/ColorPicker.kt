@@ -1,6 +1,7 @@
 ﻿package com.kevinisabelle.visualizerui.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
@@ -23,14 +24,13 @@ fun ColorPicker(
 ) {
     val selectedColor = remember { mutableStateOf(color) }
 
-    Row(modifier = modifier)
+    Column(modifier = modifier)
     {
         // Draw a swatch to show the selected color
         Row(
             modifier = Modifier
                 .width(100.dp)
-                .height(100.dp)
-                .weight(0.25f)
+                .height(20.dp)
                 .background(selectedColor.value.toStdColor())
         ) {
 0            // This row will show the selected color as a swatch
@@ -44,7 +44,7 @@ fun ColorPicker(
                 // Convert the selected color back to Rgb888 and notify the listener
                 onColorSelected(selectedColor.value)
             },
-            modifier = Modifier.weight(0.75f).height(100.dp) // Make the color picker take up available space
+            modifier = Modifier.width(100.dp).weight(1f, true)
         )
 
     }
@@ -56,5 +56,5 @@ fun ColorPickerComponentPreview() {
     ColorPicker(color = Rgb888.fromStdColor(Color.Blue), onColorSelected = { newColor ->
 
         println("Color 1 set to: $newColor")
-    })
+    }, modifier = Modifier.width(100.dp).height(200.dp))
 }

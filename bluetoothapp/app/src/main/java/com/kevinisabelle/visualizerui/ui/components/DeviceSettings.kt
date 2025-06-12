@@ -9,7 +9,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Preview
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.SavedSearch
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -74,11 +77,14 @@ fun DeviceSettings(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.weight(1f)
             )
-            Button(
+            IconButton(
                 onClick = { },
                 modifier = Modifier.padding(start = 8.dp)
             ) {
-                Text(text = "Save as preset")
+                Icon(
+                    imageVector = Icons.Default.Save,
+                    contentDescription = "Reload settings"
+                )
             }
         }
         TitleRow(title = "Brightness ${settings.brightness.toString().take(4)}")
@@ -92,49 +98,61 @@ fun DeviceSettings(
                 modifier = Modifier.weight(1f)
             )
         }
-        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically)
+        Row(
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            modifier = Modifier.height(300.dp))
         {
-            Text(
-                text = "Color 1",
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.weight(0.25f)
+            Column(
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                modifier = Modifier.weight(0.25f).padding(end = 8.dp)
             )
+            {
+                Text(
+                    text = "Color 1",
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center
+                )
 
-            ColorPicker(
-                color = settings.color1, 
-                modifier = Modifier.weight(0.75f).height(50.dp),
-                onColorSelected = { newColor -> onSetColor1(newColor) }
+                ColorPicker(
+                    color = settings.color1,
+                    modifier = Modifier.width(100.dp).height(300.dp).padding(top = 8.dp),
+                    onColorSelected = { newColor -> onSetColor1(newColor) }
+                )
+            }
+            Column(
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                modifier = Modifier.weight(0.25f).padding(horizontal = 8.dp)
             )
-        }
-        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically)
-        {
-            Text(
-                text = "Color 2",
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.weight(0.25f)
-            )
+            {
+                Text(
+                    text = "Color 2",
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center
+                )
 
-            ColorPicker(
-                modifier = Modifier.weight(0.75f).height(50.dp),
-                color = settings.color2,
-                onColorSelected = { newColor -> onSetColor2(newColor) },
+                ColorPicker(
+                    color = settings.color2,
+                    modifier = Modifier.width(100.dp).height(300.dp).padding(top = 8.dp),
+                    onColorSelected = { newColor -> onSetColor2(newColor) }
+                )
+            }
+            Column(
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                modifier = Modifier.weight(0.25f).padding(start = 8.dp)
             )
-        }
-        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically)
-        {
-            Text(
-                text = "Color 3",
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.weight(0.25f)
-            )
-            ColorPicker(
-                modifier = Modifier.weight(0.75f).height(50.dp),
-                color = settings.color3,
-                onColorSelected = { newColor -> onSetColor3(newColor) },
-            )
+            {
+                Text(
+                    text = "Color 3",
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center
+                )
+
+                ColorPicker(
+                    color = settings.color3,
+                    modifier = Modifier.width(100.dp).height(300.dp).padding(top = 8.dp),
+                    onColorSelected = { newColor -> onSetColor3(newColor) }
+                )
+            }
         }
         TitleRow(title="Mode")
         Row(
@@ -247,7 +265,7 @@ fun DeviceSettings(
                 onValueChange = { newValue ->
                     onSetGain(newValue)
                 },
-                valueRange = 1f..100f,
+                valueRange = 0.5f..50f,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -258,7 +276,7 @@ fun DeviceSettings(
                 onValueChange = { newValue ->
                     onSetSmoothSize(newValue.toInt())
                 },
-                valueRange = 1f..100f,
+                valueRange = 1f..50f,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -269,7 +287,7 @@ fun DeviceSettings(
                 onValueChange = { newValue ->
                     onSetSkew(newValue)
                 },
-                valueRange = 0.1f..5.0f,
+                valueRange = 0.1f..1.5f,
                 modifier = Modifier.weight(1f)
             )
         }

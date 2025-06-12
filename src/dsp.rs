@@ -10,13 +10,8 @@ pub fn process_audio_data(
     state_values: &Arc<Mutex<StateValues>>,
     settings: &Settings
 ) {
-    // println!("Processing audio data... settings = {:?}", settings);
-    // println!("Frequency levels length: {}", frequency_levels.lock().unwrap().len());
     let df = settings.cached_df; // frequency bin width
 
-    // Print the buffer size for debugging
-    // println!("Samples buffer content: {:?}", data);
-    
     // 1.  Move samples into the rolling window
     {
         state_values.lock().unwrap().samples_window.add_samples(data);
@@ -26,13 +21,24 @@ pub fn process_audio_data(
         }
     }
 
+    // println!("Processing {} samples for FFT", state_values.lock().unwrap().samples_window.samples.lock().unwrap().len());
+
+    // Take fft_size samples from the end of the rolling window
+    let samples_window = state_values.lock().unwrap().samples_window.samples.lock().unwrap().
+        iter()
+        .rev()
+        .take(settings.fft_size)
+        .cloned()
+        .rev()
+        .collect::<Vec<f32>>();
+
     // 2.  FFT → linear magnitude spectrum (already √N-normalised)
     let spec = samples_fft_to_spectrum(
-        &state_values.lock().unwrap().samples_window.samples.lock().unwrap(),
+        &samples_window,
         SAMPLE_RATE,
         FrequencyLimit::All,
         Some(&divide_by_N_sqrt),
-    ).expect("FFT");
+    ).expect("FFT failed – check sample count");
 
     for (i, &f_cfg) in settings.frequencies.iter().enumerate() {
         let idx_c = (f_cfg / df).round() as isize;          // centre bin

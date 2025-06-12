@@ -21,7 +21,6 @@ pub fn animate_leds(state_values: &Arc<Mutex<StateValues>>, settings_arc: &Arc<M
     } else {
         for freq in 0..nb_frequency_levels {
             let level = frequency_levels[freq].average(sample_to_average);
-            // println!("Frequency {}: Level: {:.3}", freq, level);
             let max = frequency_levels[freq].max(sample_to_average);
             let strip_colors = get_strip_colors(level, max, &settings.clone(), freq);
             output_colors_to_buffer(&mut buf, &strip_colors, freq);
