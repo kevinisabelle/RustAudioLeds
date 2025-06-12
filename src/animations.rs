@@ -10,7 +10,7 @@ pub fn animate_leds(state_values: &Arc<Mutex<StateValues>>, settings_arc: &Arc<M
 
     let frequency_levels = state_values.lock().unwrap().frequencies.clone();
     let settings = settings_arc.lock().unwrap().clone();
-    let frame_delay = Duration::from_millis(1_000 / settings.fps);
+    let frame_delay = Duration::from_millis(1_000 / settings.fps as u64);
 
     let mut buf = Vec::with_capacity(NUM_LEDS * 3 + 1);
     let nb_frequency_levels = settings_arc.lock().unwrap().frequencies.len();
@@ -95,7 +95,7 @@ fn get_strip_colors(level: f32, max: f32, settings: &Settings, index: usize) -> 
         DisplayMode::ColorGradient => {
             for i in 0..LEDS_PER_STRIP {
                 let mix_factor = (i+1) as f32 / LEDS_PER_STRIP as f32;
-                let color = settings.color1_object.clone().mix(&settings.color2_object.clone(), mix_factor);
+                let color = settings.color1.clone().mix(&settings.color2.clone(), mix_factor);
                 strip_colors[i] = color.clone();
             }
         }
@@ -110,8 +110,8 @@ pub fn full_spectrum(
     settings_arc: &Settings,
     strip_colors: &mut Vec<Color>,
 ) {
-    let color1 = settings_arc.color1_object.clone();
-    let color2 = settings_arc.color2_object.clone();
+    let color1 = settings_arc.color1.clone();
+    let color2 = settings_arc.color2.clone();
     let num_leds_to_light_float = (level * LEDS_PER_STRIP as f32).min(LEDS_PER_STRIP as f32);
     let num_leds_to_light = num_leds_to_light_float.ceil() as usize;
     let leftover_value = 1.0 - (num_leds_to_light as f32 - num_leds_to_light_float).max(0.0);
@@ -138,7 +138,7 @@ pub fn full_spectrum_with_max(
     strip_colors: &mut Vec<Color>,
 ) {
     full_spectrum(level, index, settings_arc, strip_colors);
-    strip_colors[LEDS_PER_STRIP-1] = settings_arc.color3_object.clone().brightness(level.min(1.0));
+    strip_colors[LEDS_PER_STRIP-1] = settings_arc.color3.clone().brightness(level.min(1.0));
 }
 
 pub fn points_spectrum(
@@ -152,7 +152,7 @@ pub fn points_spectrum(
     let factor = (level * LEDS_PER_STRIP as f32) - first_led_index as f32;
 
     first_led_index = first_led_index.min(LEDS_PER_STRIP - 1);
-    let color_to_use = settings_arc.color1_object.clone().mix(&settings_arc.color2_object.clone(), level);
+    let color_to_use = settings_arc.color1.clone().mix(&settings_arc.color2.clone(), level);
 
     strip_colors[first_led_index] = color_to_use.brightness(1.0 - factor);
     if last_led_index < LEDS_PER_STRIP {
@@ -166,8 +166,8 @@ pub fn spectrum_middle(
     settings_arc: &Settings,
     strip_colors: &mut Vec<Color>,
 ) {
-    let color1 = settings_arc.color1_object.clone();
-    let color2 = settings_arc.color2_object.clone();
+    let color1 = settings_arc.color1.clone();
+    let color2 = settings_arc.color2.clone();
     let middle_index = LEDS_PER_STRIP / 2;
 
     let num_leds_to_light_float = (level * middle_index as f32).min(middle_index as f32);
@@ -201,6 +201,6 @@ pub fn spectrum_middle_with_max(
     strip_colors: &mut Vec<Color>,
 ) {
     spectrum_middle(level, index, settings_arc, strip_colors);
-    strip_colors[LEDS_PER_STRIP-1] = settings_arc.color3_object.clone().brightness(level.min(1.0));
-    strip_colors[0] = settings_arc.color3_object.clone().brightness(level.min(1.0));
+    strip_colors[LEDS_PER_STRIP-1] = settings_arc.color3.clone().brightness(level.min(1.0));
+    strip_colors[0] = settings_arc.color3.clone().brightness(level.min(1.0));
 }

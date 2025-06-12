@@ -11,6 +11,14 @@ impl Color {
         Color { r, g, b }
     }
 
+    pub const fn from_slice(slice: &[u8; 3]) -> Self {
+        Color {
+            r: slice[0],
+            g: slice[1],
+            b: slice[2],
+        }
+    }
+
     pub fn to_slice(&self) -> [u8; 3] {
         [self.g.min(254), self.r.min(254), self.b.min(254)]
     }
@@ -29,6 +37,10 @@ impl Color {
             g: ((self.g as f32 * (1.0 - factor)) + (other.g as f32 * factor)).min(254.0) as u8,
             b: ((self.b as f32 * (1.0 - factor)) + (other.b as f32 * factor)).min(254.0) as u8,
         }
+    }
+
+    pub fn to_rgb_888(&self) -> Vec<u8> {
+        vec![self.r, self.g, self.b]
     }
 }
 

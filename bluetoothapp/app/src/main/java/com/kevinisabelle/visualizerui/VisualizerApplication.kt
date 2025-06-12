@@ -1,8 +1,10 @@
 ﻿package com.kevinisabelle.visualizerui
 
 import android.app.Application
+import androidx.compose.ui.graphics.Color
 import com.kevinisabelle.visualizerui.data.AnimationMode
 import com.kevinisabelle.visualizerui.data.DisplayMode
+import com.kevinisabelle.visualizerui.data.Rgb888
 import com.kevinisabelle.visualizerui.services.Settings
 import dagger.hilt.android.HiltAndroidApp
 
@@ -14,10 +16,10 @@ class VisualizerApplication : Application() {
             smoothSize = 10,
             gain = 1.0f,
             fps = 60L,
-            color1 = "#FF0000",
-            color2 = "#00FF00",
-            color3 = "#0000FF",
-            fftSize = 1024,
+            color1 = Rgb888.fromStdColor(Color.Blue),
+            color2 = Rgb888.fromStdColor(Color.Blue),
+            color3 = Rgb888.fromStdColor(Color.Blue),
+            fftSize = 1024u,
             frequencies = listOf(20f, 200f, 2000f, 20000f),
             gains = listOf(1.0f, 1.0f, 1.0f, 1.0f),
             skew = 0.5f,

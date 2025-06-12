@@ -32,6 +32,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.activity:activity-compose:1.8.0")
+    implementation("com.godaddy.android.colorpicker:compose-color-picker:0.7.0")
 
     // ── Navigation-Compose ─────────────────────────────────
     implementation("androidx.navigation:navigation-compose:2.9.0")

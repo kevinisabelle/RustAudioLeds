@@ -6,9 +6,11 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanSettings
 import android.content.Context
+import androidx.compose.ui.graphics.Color
 import com.kevinisabelle.visualizerui.data.AnimationMode
 import com.kevinisabelle.visualizerui.data.DisplayMode
 import com.kevinisabelle.visualizerui.data.ParameterSpec
+import com.kevinisabelle.visualizerui.data.Rgb888
 import com.kevinisabelle.visualizerui.services.Settings
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -174,15 +176,15 @@ class BleVisualizerRepository(
             settings = settings.copy(
                 fps = currentDevice?.read(ParameterSpec.Fps)?.toLong() ?: 30,
                 smoothSize = currentDevice?.read(ParameterSpec.SmoothSize)?.toInt() ?: 2,
-                fftSize = currentDevice?.read(ParameterSpec.FftSize)?.toInt() ?: 1024,
+                fftSize = currentDevice?.read(ParameterSpec.FftSize)?.toUShort() ?: 1024u,
                 gain = currentDevice?.read(ParameterSpec.Gain) ?: 1.0f,
                 skew = currentDevice?.read(ParameterSpec.Skew) ?: 0.0f,
                 brightness = currentDevice?.read(ParameterSpec.Brightness) ?: 1.0f,
                 displayMode = currentDevice?.read(ParameterSpec.Display) ?: DisplayMode.Spectrum,
                 animationMode = currentDevice?.read(ParameterSpec.Animation) ?: AnimationMode.Full,
-                color1 = currentDevice?.read(ParameterSpec.Color(1)).let { it?.toHex() ?: "#FF0000" },
-                color2 = currentDevice?.read(ParameterSpec.Color(2)).let { it?.toHex() ?: "#00FF00" },
-                color3 = currentDevice?.read(ParameterSpec.Color(3)).let { it?.toHex() ?: "#0000FF" },
+                color1 = currentDevice?.read(ParameterSpec.Color(1)) ?: Rgb888.fromStdColor(Color.Blue),
+                color2 = currentDevice?.read(ParameterSpec.Color(2)) ?: Rgb888.fromStdColor(Color.Green),
+                color3 = currentDevice?.read(ParameterSpec.Color(3)) ?: Rgb888.fromStdColor(Color.Red),
                 gains = currentDevice?.read(ParameterSpec.Gains)?.toList() ?: listOf(1.0f, 1.0f, 1.0f, 1.0f),
                 frequencies = currentDevice?.read(ParameterSpec.Frequencies)?.toList() ?: listOf(20f, 200f, 2000f, 20000f),
                 ledsCount = currentDevice?.read(ParameterSpec.LedCount)?.toInt() ?: 0
@@ -190,5 +192,60 @@ class BleVisualizerRepository(
             settings
         }
     }
+
+    suspend fun setFftSize(i: UShort) {
+        currentDevice?.write(ParameterSpec.FftSize, i)
+    }
+
+    suspend fun setSkew(skew: Float) {
+        currentDevice?.write(ParameterSpec.Skew, skew)
+    }
+
+    suspend fun setBrightness(brightness: Float) {
+        currentDevice?.write(ParameterSpec.Brightness, brightness)
+    }
+
+    suspend fun setDisplayMode(mode: DisplayMode) {
+        currentDevice?.write(ParameterSpec.Display, mode)
+    }
+
+    suspend fun setAnimationMode(mode: AnimationMode) {
+        currentDevice?.write(ParameterSpec.Animation, mode)
+    }
+
+    suspend fun setColor1(color: Rgb888) {
+        currentDevice?.write(ParameterSpec.Color(1), color)
+    }
+
+    suspend fun setColor2(color: Rgb888) {
+        currentDevice?.write(ParameterSpec.Color(2), color)
+    }
+
+    suspend fun setColor3(color: Rgb888) {
+        currentDevice?.write(ParameterSpec.Color(3), color)
+    }
+
+    suspend fun setFrequencies(frequencies: List<Float>) {
+        if (frequencies.size != ParameterSpec.Frequencies.COUNT) {
+            throw IllegalArgumentException("Frequencies must have exactly ${ParameterSpec.Frequencies.COUNT} elements")
+        }
+        currentDevice?.write(ParameterSpec.Frequencies, frequencies.toFloatArray())
+    }
+
+    suspend fun setGains(gains: List<Float>) {
+        if (gains.size != ParameterSpec.Gains.COUNT) {
+            throw IllegalArgumentException("Gains must have exactly ${ParameterSpec.Gains.COUNT} elements")
+        }
+        currentDevice?.write(ParameterSpec.Gains, gains.toFloatArray())
+    }
+
+    suspend fun setSmoothSize(i: Int) {
+        currentDevice?.write(ParameterSpec.SmoothSize, i.toUShort())
+    }
+
+    suspend fun setFps(lng: Long) {
+        currentDevice?.write(ParameterSpec.Fps, lng.toUShort())
+    }
+
 
 }

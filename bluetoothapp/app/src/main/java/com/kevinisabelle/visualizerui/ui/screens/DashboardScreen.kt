@@ -29,6 +29,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.kevinisabelle.visualizerui.ble.BleVisualizerRepository
+import com.kevinisabelle.visualizerui.data.AnimationMode
+import com.kevinisabelle.visualizerui.data.DisplayMode
+import com.kevinisabelle.visualizerui.data.Rgb888
 import com.kevinisabelle.visualizerui.services.Settings
 import com.kevinisabelle.visualizerui.ui.components.DeviceSettings
 import com.kevinisabelle.visualizerui.ui.components.LedPreview
@@ -142,10 +145,45 @@ fun DashboardScreen(
 
                     DeviceSettings(
                         settings = ui.settings ?: Settings(),
-                        onSetGain = { },
-                        onSetFrequencyGain = { freq, gain -> Unit },
-                        onSetSkew = { },
-                        onSetSmoothSize = { },
+                        onSetGain = { gain ->
+                            viewModel.setGain(gain)
+                        },
+                        onSetFrequencyGain = { freq, gain ->
+                            viewModel.setGains(ui.settings?.gains?.mapIndexed { index, _ ->
+                                if (index == freq) gain else ui.settings?.gains?.get(index) ?: 0f
+                            } ?: emptyList())
+                        },
+                        onSetSkew = { skew ->
+                            viewModel.setSkew(skew)
+                        },
+                        onSetSmoothSize = { smoothSize ->
+                            viewModel.setSmoothSize(smoothSize)
+                        },
+                        onSetFps = { fps ->
+                            viewModel.setFps(fps)
+                        },
+                        onSetBrightness = { brightness ->
+                            viewModel.setBrightness(brightness)
+                        },
+                        onSetColor1 = { color ->
+                            viewModel.setColor1(color)
+                        },
+                        onSetColor2 = { color ->
+                            viewModel.setColor2(color)
+                        },
+                        onSetColor3 = { color ->
+                            viewModel.setColor3(color)
+                        },
+                        onSetFftSize = { size ->
+                            viewModel.setFFTSize(size)
+                        },
+                        onSetDisplayMode = { mode ->
+                            viewModel.setDisplayMode(mode)
+                        },
+                        onSetAnimationMode = { mode ->
+                            viewModel.setAnimationMode(mode)
+                        },
+                        onRefreshClick = { viewModel.getSettings() },
                     )
                 }
 
@@ -208,6 +246,83 @@ class DashboardViewModel @Inject constructor(
         repo.setGain(b)
         if (_ui.value.settings != null) {
             _ui.update { it.copy(settings = it.settings?.copy(gain = b)) }
+        }
+    }
+
+    fun setFFTSize(size: Int) = viewModelScope.launch {
+        repo.setFftSize(size.toUShort())
+        if (_ui.value.settings != null) {
+            _ui.update { it.copy(settings = it.settings?.copy(fftSize = size.toUShort())) }
+        }
+    }
+
+    fun setDisplayMode(mode: DisplayMode) = viewModelScope.launch {
+        repo.setDisplayMode(mode)
+        if (_ui.value.settings != null) {
+            _ui.update { it.copy(settings = it.settings?.copy(displayMode = mode)) }
+        }
+    }
+
+    fun setAnimationMode(mode: AnimationMode) = viewModelScope.launch {
+        repo.setAnimationMode(mode)
+        if (_ui.value.settings != null) {
+            _ui.update { it.copy(settings = it.settings?.copy(animationMode = mode)) }
+        }
+    }
+
+    fun setSmoothSize(size: Int) = viewModelScope.launch {
+        repo.setSmoothSize(size)
+        if (_ui.value.settings != null) {
+            _ui.update { it.copy(settings = it.settings?.copy(smoothSize = size)) }
+        }
+    }
+
+    fun setSkew(skew: Float) = viewModelScope.launch {
+        repo.setSkew(skew)
+        if (_ui.value.settings != null) {
+            _ui.update { it.copy(settings = it.settings?.copy(skew = skew)) }
+        }
+    }
+
+    fun setBrightness(brightness: Float) = viewModelScope.launch {
+        repo.setBrightness(brightness)
+        if (_ui.value.settings != null) {
+            _ui.update { it.copy(settings = it.settings?.copy(brightness = brightness)) }
+        }
+    }
+
+    fun setColor1(color: Rgb888) = viewModelScope.launch {
+        repo.setColor1(color)
+        if (_ui.value.settings != null) {
+            _ui.update { it.copy(settings = it.settings?.copy(color1 = color)) }
+        }
+    }
+
+    fun setColor2(color: Rgb888) = viewModelScope.launch {
+        repo.setColor2(color)
+        if (_ui.value.settings != null) {
+            _ui.update { it.copy(settings = it.settings?.copy(color2 = color)) }
+        }
+    }
+
+    fun setColor3(color: Rgb888) = viewModelScope.launch {
+        repo.setColor3(color)
+        if (_ui.value.settings != null) {
+            _ui.update { it.copy(settings = it.settings?.copy(color3 = color)) }
+        }
+    }
+
+    fun setGains(gains: List<Float>) = viewModelScope.launch {
+        repo.setGains(gains)
+        if (_ui.value.settings != null) {
+            _ui.update { it.copy(settings = it.settings?.copy(gains = gains)) }
+        }
+    }
+
+    fun setFps(fps: Long) = viewModelScope.launch {
+        repo.setFps(fps)
+        if (_ui.value.settings != null) {
+            _ui.update { it.copy(settings = it.settings?.copy(fps = fps)) }
         }
     }
 }

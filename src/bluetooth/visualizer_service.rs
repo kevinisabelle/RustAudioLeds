@@ -1,7 +1,5 @@
-﻿//! src/ble/visualizer_service.rs
-
-use crate::bluez::base_gatt_service::BaseGattService;
-use crate::constants::GATT_SERVICE_VISUALIZER_UUID;
+﻿use crate::bluez::base_gatt_service::BaseGattService;
+use crate::constants::{GATT_SERVICE_VISUALIZER_PATH, GATT_SERVICE_VISUALIZER_UUID};
 
 use crate::bluez::utils::{register_object_with_path, ObjectInterfaces, ObjectPathTrait};
 use crate::{extend_option_prop, extend_service_props, object_path};
@@ -11,27 +9,21 @@ use std::fmt::Debug;
 use std::sync::{Arc, Mutex};
 use macros::gatt_service;
 use zbus::{interface, Connection};
-
-// ---------------------------------------------------------------------------
-// Characteristic forward-declarations (implement each in its own file)
-// ---------------------------------------------------------------------------
-use crate::bluetooth::smooth_size_chrc::SmoothSizeChrc;
-use crate::bluetooth::gain_chrc::{get_gain_chrc, GainChrc, GainChrcInterface};
-use crate::bluetooth::fps_chrc::FpsChrc;
-// use crate::bluetooth::color1_chrc::Color1Chrc;
-// use crate::bluetooth::color2_chrc::Color2Chrc;
-// use crate::bluetooth::color3_chrc::Color3Chrc;
-use crate::bluetooth::fft_size_chrc::FftSizeChrc;
-use crate::bluetooth::led_count_chrc::{get_led_count_chrc, LedCountChrc};
-use crate::bluetooth::leds_buffer2_chrc::{get_led_buffer2_chrc, LedBuffer2Chrc};
-use crate::bluetooth::leds_buffer_chrc::{get_led_buffer_chrc, LedBufferChrc};
+use crate::bluetooth::chrc_animation_mode::{get_animation_mode_chrc, AnimationModeChrc};
+use crate::bluetooth::chrc_brightness::{get_brightness_chrc, BrightnessChrc};
+use crate::bluetooth::chrc_color::{get_color1_chrc, get_color2_chrc, get_color3_chrc, ColorChrc};
+use crate::bluetooth::chrc_display_mode::{get_display_mode_chrc, DisplayModeChrc};
+use crate::bluetooth::chrc_smooth_size::{get_smooth_size_chrc, SmoothSizeChrc};
+use crate::bluetooth::chrc_gain::{get_gain_chrc, GainChrc};
+use crate::bluetooth::chrc_fps::{get_fps_chrc, FpsChrc};
+use crate::bluetooth::chrc_fft_size::{get_fft_size_chrc, FftSizeChrc};
+use crate::bluetooth::chrc_frequencies::{get_frequencies_chrc, FrequenciesChrc};
+use crate::bluetooth::chrc_gains::{get_gains_chrc, GainsChrc};
+use crate::bluetooth::chrc_led_count::{get_led_count_chrc, LedCountChrc};
+use crate::bluetooth::chrc_leds_buffer2::{get_led_buffer2_chrc, LedBuffer2Chrc};
+use crate::bluetooth::chrc_leds_buffer::{get_led_buffer_chrc, LedBufferChrc};
+use crate::bluetooth::chrc_skew::{get_skew_chrc, SkewChrc};
 use crate::settings::Settings;
-// use crate::bluetooth::frequencies_chrc::FrequenciesChrc;
-// use crate::bluetooth::gains_chrc::GainsChrc;
-// use crate::bluetooth::skew_chrc::SkewChrc;
-// use crate::bluetooth::brightness_chrc::BrightnessChrc;
-// use crate::bluetooth::display_mode_chrc::DisplayModeChrc;
-// use crate::bluetooth::animation_mode_chrc::AnimationModeChrc;
 
 // ---------------------------------------------------------------------------
 // Service object
@@ -42,23 +34,22 @@ pub struct VisualizerService {
     pub base: BaseGattService,
 
     // 13 characteristics – added lazily when constructed elsewhere
-    pub led_count: Option<Arc<Mutex<LedCountChrc>>>,
-    pub led_buffer_chrc: Option<Arc<Mutex<LedBufferChrc>>>,
-    pub led_buffer2_chrc: Option<Arc<Mutex<LedBuffer2Chrc>>>,
+    pub led_count:          Option<Arc<Mutex<LedCountChrc>>>,
+    pub led_buffer_chrc:    Option<Arc<Mutex<LedBufferChrc>>>,
+    pub led_buffer2_chrc:   Option<Arc<Mutex<LedBuffer2Chrc>>>,
     pub smooth_size_chrc:   Option<Arc<Mutex<SmoothSizeChrc>>>,
     pub gain_chrc:          Option<Arc<Mutex<GainChrc>>>,
     pub fps_chrc:           Option<Arc<Mutex<FpsChrc>>>,
-    
-    //pub color1_chrc:        Option<Arc<Mutex<Color1Chrc>>>,
-    //pub color2_chrc:        Option<Arc<Mutex<Color2Chrc>>>,
-    //pub color3_chrc:        Option<Arc<Mutex<Color3Chrc>>>,
+    pub color1_chrc:        Option<Arc<Mutex<ColorChrc>>>,
+    pub color2_chrc:        Option<Arc<Mutex<ColorChrc>>>,
+    pub color3_chrc:        Option<Arc<Mutex<ColorChrc>>>,
     pub fft_size_chrc:      Option<Arc<Mutex<FftSizeChrc>>>,
-    //pub frequencies_chrc:   Option<Arc<Mutex<FrequenciesChrc>>>,
-    //pub gains_chrc:         Option<Arc<Mutex<GainsChrc>>>,
-    //pub skew_chrc:          Option<Arc<Mutex<SkewChrc>>>,
-    //pub brightness_chrc:    Option<Arc<Mutex<BrightnessChrc>>>,
-    //pub display_mode_chrc:  Option<Arc<Mutex<DisplayModeChrc>>>,
-    //pub animation_mode_chrc:Option<Arc<Mutex<AnimationModeChrc>>>,
+    pub frequencies_chrc:   Option<Arc<Mutex<FrequenciesChrc>>>,
+    pub gains_chrc:         Option<Arc<Mutex<GainsChrc>>>,
+    pub skew_chrc:          Option<Arc<Mutex<SkewChrc>>>,
+    pub brightness_chrc:    Option<Arc<Mutex<BrightnessChrc>>>,
+    pub display_mode_chrc:  Option<Arc<Mutex<DisplayModeChrc>>>,
+    pub animation_mode_chrc:Option<Arc<Mutex<AnimationModeChrc>>>,
 }
 
 object_path! {
@@ -78,16 +69,16 @@ object_path! {
                 led_count:           None,
                 led_buffer_chrc:     None,
                 led_buffer2_chrc:    None,
-                //color1_chrc:         None,
-                //color2_chrc:         None,
-                //color3_chrc:         None,
+                color1_chrc:         None,
+                color2_chrc:         None,
+                color3_chrc:         None,
                 fft_size_chrc:       None,
-                //frequencies_chrc:    None,
-                //gains_chrc:          None,
-                //skew_chrc:           None,
-                //brightness_chrc:     None,
-                //display_mode_chrc:   None,
-                //animation_mode_chrc: None,
+                frequencies_chrc:    None,
+                gains_chrc:          None,
+                skew_chrc:           None,
+                brightness_chrc:     None,
+                display_mode_chrc:   None,
+                animation_mode_chrc: None,
             }
         }
 
@@ -108,16 +99,16 @@ object_path! {
             extend_option_prop!(&self.led_count,           properties);
             extend_option_prop!(&self.led_buffer_chrc,     properties);
             extend_option_prop!(&self.led_buffer2_chrc,    properties);
-            //extend_option_prop!(&self.color1_chrc,         properties);
-            //extend_option_prop!(&self.color2_chrc,         properties);
-            //extend_option_prop!(&self.color3_chrc,         properties);
+            extend_option_prop!(&self.color1_chrc,         properties);
+            extend_option_prop!(&self.color2_chrc,         properties);
+            extend_option_prop!(&self.color3_chrc,         properties);
             extend_option_prop!(&self.fft_size_chrc,       properties);
-            //extend_option_prop!(&self.frequencies_chrc,    properties);
-            //extend_option_prop!(&self.gains_chrc,          properties);
-            //extend_option_prop!(&self.skew_chrc,           properties);
-            //extend_option_prop!(&self.brightness_chrc,     properties);
-            //extend_option_prop!(&self.display_mode_chrc,   properties);
-            //extend_option_prop!(&self.animation_mode_chrc, properties);
+            extend_option_prop!(&self.frequencies_chrc,    properties);
+            extend_option_prop!(&self.gains_chrc,          properties);
+            extend_option_prop!(&self.skew_chrc,           properties);
+            extend_option_prop!(&self.brightness_chrc,     properties);
+            extend_option_prop!(&self.display_mode_chrc,   properties);
+            extend_option_prop!(&self.animation_mode_chrc, properties);
 
             properties
         }
@@ -139,63 +130,203 @@ pub async fn get_visualizer_service(
     settings: Arc<Mutex<Settings>>
 ) -> zbus::Result<Arc<Mutex<VisualizerService>>> {
     let visualizer_service = Arc::new(Mutex::new(VisualizerService::new(
-        "/com/kevinisabelle/ledvisualizer/visu_serv".to_string(),
+        GATT_SERVICE_VISUALIZER_PATH.to_string(),
     )));
 
     let visualizer_service_path = visualizer_service.lock().unwrap().object_path().clone();
 
+    // Gain characteristic
     let gain_chrc = get_gain_chrc(
         connection,
         visualizer_service_path.clone(),
         settings.clone(),
     ).await?;
-
     visualizer_service
         .lock()
         .unwrap()
         .add_characteristic_path(gain_chrc.lock().unwrap().object_path().clone());
-   
     visualizer_service.lock().unwrap().gain_chrc = Some(gain_chrc.clone());
-    
+
+    // Led count characteristic
     let led_count_chrc = get_led_count_chrc(
         connection,
         visualizer_service_path.clone(),
     ).await?;
-    
     visualizer_service
         .lock()
         .unwrap()
         .add_characteristic_path(led_count_chrc.lock().unwrap().object_path().clone());
-    
     visualizer_service.lock().unwrap().led_count = Some(led_count_chrc.clone());
-    
+
+    // ----- Smooth size characteristic -----
+    let smooth_size_chrc = get_smooth_size_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone()
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(smooth_size_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().smooth_size_chrc = Some(smooth_size_chrc.clone());
+
+    // ------ FPS characteristic -----
+    let fps_chrc = get_fps_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(fps_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().fps_chrc = Some(fps_chrc.clone());
+
+    // ------ Color1 characteristic -----
+    let color1_chrc = get_color1_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(color1_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().color1_chrc = Some(color1_chrc.clone());
+
+    // ------ Color2 characteristic -----
+    let color2_chrc = get_color2_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(color2_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().color2_chrc = Some(color2_chrc.clone());
+
+    // ------ Color3 characteristic -----
+    let color3_chrc = get_color3_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(color3_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().color3_chrc = Some(color3_chrc.clone());
+
+    // ------ FFT size characteristic -----
+    let fft_size_chrc = get_fft_size_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(fft_size_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().fft_size_chrc = Some(fft_size_chrc.clone());
+
+    // ------ Frequencies characteristic -----
+    let freq_chrc = get_frequencies_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(freq_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().frequencies_chrc = Some(freq_chrc.clone());
+
+    // ------ Gains characteristic -----
+    let gains_chrc = get_gains_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(gains_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().gains_chrc = Some(gains_chrc.clone());
+
+    // ------ Skew characteristic -----
+    let skew_chrc = get_skew_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(skew_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().skew_chrc = Some(skew_chrc.clone());
+
+    // ------ Brightness characteristic -----
+    let brightness_chrc = get_brightness_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(brightness_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().brightness_chrc = Some(brightness_chrc.clone());
+
+    // ------ Display mode characteristic -----
+    let display_mode_chrc = get_display_mode_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(display_mode_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().display_mode_chrc = Some(display_mode_chrc.clone());
+
+    // ------ Animation mode characteristic -----
+    let animation_mode_chrc = get_animation_mode_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(animation_mode_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().animation_mode_chrc = Some(animation_mode_chrc.clone());
+
+    // ------ Led buffer characteristics ------
     let led_buffer_chrc = get_led_buffer_chrc(
         connection,
         visualizer_service_path.clone(),
         settings.clone(),
     ).await?;
-    
     visualizer_service
         .lock()
         .unwrap()
         .add_characteristic_path(led_buffer_chrc.lock().unwrap().object_path().clone());
-    
     visualizer_service.lock().unwrap().led_buffer_chrc = Some(led_buffer_chrc.clone());
 
+    // ------ Led buffer 2 characteristic ------
     let led_buffer2_chrc = get_led_buffer2_chrc(
         connection,
         visualizer_service_path.clone(),
         settings.clone(),
     ).await?;
-
     visualizer_service
         .lock()
         .unwrap()
         .add_characteristic_path(led_buffer2_chrc.lock().unwrap().object_path().clone());
-
-    // Add the second LED buffer characteristic
     visualizer_service.lock().unwrap().led_buffer2_chrc = Some(led_buffer2_chrc.clone());
 
+    // ------ Service registration ------
     let visualizer_service_interface = VisualizerServiceInterface(visualizer_service.clone());
     let visualizer_service_object_path = visualizer_service.lock().unwrap().object_path().clone();
     register_object_with_path(

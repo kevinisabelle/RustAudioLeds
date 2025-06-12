@@ -20,7 +20,7 @@ pub fn process_audio_data(
     // 1.  Move samples into the rolling window
     {
         state_values.lock().unwrap().samples_window.add_samples(data);
-        if state_values.lock().unwrap().samples_window.samples.lock().unwrap().len() < settings.fft_size {
+        if state_values.lock().unwrap().samples_window.samples.lock().unwrap().len() < settings.fft_size as usize {
             println!("Not enough samples for FFT: {} < {}", state_values.lock().unwrap().samples_window.samples.lock().unwrap().len(), settings.fft_size);
             return;                       // not enough for one FFT yet
         }

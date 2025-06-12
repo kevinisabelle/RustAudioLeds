@@ -9,5 +9,14 @@ enum class DisplayMode(val code: UByte) {
         fun from(code: UByte) =
             entries.firstOrNull { it.code == code }
                 ?: error("Unknown DisplayMode code=$code")
+
+        fun fromString(string: String) : DisplayMode {
+            return when (string.lowercase()) {
+                "spectrum" -> Spectrum
+                "oscilloscope" -> Oscilloscope
+                "colorgradient" -> ColorGradient
+                else -> error("Unknown DisplayMode string=$string")
+            }
+        }
     }
 }

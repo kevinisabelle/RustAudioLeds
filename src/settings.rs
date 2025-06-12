@@ -24,13 +24,10 @@ pub enum AnimationMode {
 pub struct Settings  {
     pub smooth_size: usize,
     pub gain: f32,
-    pub fps: u64,
-    pub color1: String,
-    pub color2: String,
-    pub color3: String,
-    pub color1_object: Color,
-    pub color2_object: Color,
-    pub color3_object: Color,
+    pub fps: usize,
+    pub color1: Color,
+    pub color2: Color,
+    pub color3: Color,
     pub fft_size: usize,
     pub frequencies:  Vec<f32>,
     pub gains: Vec<f32>,
@@ -56,9 +53,9 @@ pub fn get_config() -> Settings {
         smooth_size: DEFAULT_SMOOTH_SIZE,
         gain: GAIN,
         fps: FPS,
-        color1: String::from("blue"),
-        color2: String::from("red"),
-        color3: String::from("magenta"),
+        color1: color_from_string("blue"),
+        color2: color_from_string("red"),
+        color3: color_from_string("magenta"),
         fft_size: FFT_SIZE,
         skew: DEFAULT_SKEW,
         brightness: 0.0,
@@ -70,9 +67,6 @@ pub fn get_config() -> Settings {
                     0.75, 0.75, 0.75, 0.75, 1.0, 1.0, 1.0, 1.0, 1.2, 3.0,
                     4.0, 4.0],
         animation_mode: AnimationMode::Full,
-        color1_object: color_from_string("blue"),
-        color2_object: color_from_string("red"),
-        color3_object: color_from_string("magenta"),
         led_buffer: vec![0; 3 * 22 * 12 + 1], // Assuming 22 LEDs, 3 bytes per LED + 1 end marker,
         cached_df: 0.0,
     };
@@ -99,20 +93,17 @@ pub fn get_config() -> Settings {
             }
             "--color1" | "-c1" => {
                 if let Some(val) = args.next() {
-                    settings.color1 = val;
-                    settings.color1_object = color_from_string(&settings.color1);
+                    settings.color1 = color_from_string(&val);
                 }
             }
             "--color2" | "-c2" => {
                 if let Some(val) = args.next() {
-                    settings.color2 = val;
-                    settings.color2_object = color_from_string(&settings.color2);
+                    settings.color2 = color_from_string(&val);
                 }
             }
             "--color3" | "-c3" => {
                 if let Some(val) = args.next() {
-                    settings.color3 = val;
-                    settings.color3_object = color_from_string(&settings.color3);
+                    settings.color3 = color_from_string(&val);
                 }
             }
             "--skew" | "-S" => {
