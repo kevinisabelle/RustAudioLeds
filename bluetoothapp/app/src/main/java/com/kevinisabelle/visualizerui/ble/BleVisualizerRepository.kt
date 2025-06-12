@@ -187,7 +187,8 @@ class BleVisualizerRepository(
                 color3 = currentDevice?.read(ParameterSpec.Color(3)) ?: Rgb888.fromStdColor(Color.Red),
                 gains = currentDevice?.read(ParameterSpec.Gains)?.toList() ?: listOf(1.0f, 1.0f, 1.0f, 1.0f),
                 frequencies = currentDevice?.read(ParameterSpec.Frequencies)?.toList() ?: listOf(20f, 200f, 2000f, 20000f),
-                ledsCount = currentDevice?.read(ParameterSpec.LedCount)?.toInt() ?: 0
+                ledsCount = currentDevice?.read(ParameterSpec.LedCount)?.toInt() ?: 0,
+                currentPresetIndex = currentDevice?.read(ParameterSpec.PresetReadActivatedIndex)?.toInt() ?: 0
             )
             settings
         }
@@ -247,5 +248,44 @@ class BleVisualizerRepository(
         currentDevice?.write(ParameterSpec.Fps, lng.toUShort())
     }
 
+    suspend fun getPresetList(): ByteArray? {
+        return try {
+            currentDevice?.read(ParameterSpec.PresetList)
+        } catch (e: Exception) {
+            null
+        }
+    }
 
+    suspend fun savePreset(presetData: ByteArray): Boolean {
+        return try {
+            currentDevice?.write(ParameterSpec.PresetSave, presetData) ?: false
+        } catch (e: Exception) {
+            false
+        } as Boolean
+    }
+
+    suspend fun activatePreset(index: Int): Boolean {
+        return try {
+            currentDevice?.write(ParameterSpec.PresetActivate, index.toUByte()) ?: false
+        } catch (e: Exception) {
+            false
+        } as Boolean
+    }
+
+    suspend fun deletePreset(index: Int): Boolean {
+        return try {
+            currentDevice?.write(ParameterSpec.PresetDelete, index.toUByte()) ?: false
+        } catch (e: Exception) {
+            false
+        } as Boolean
+    }
+
+    suspend fun readPreset(index: Int): ByteArray? {
+        return try {
+            currentDevice?.write(ParameterSpec.PresetSelectIndex, index.toUByte())
+            currentDevice?.read(ParameterSpec.PresetRead)
+        } catch (e: Exception) {
+            null
+        }
+    }
 }

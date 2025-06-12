@@ -42,4 +42,34 @@ sealed interface ParameterSpec<T : Any> {
         override val uuid = visualizerUuid(0x0010)
         const val SIZE = 792 - 500 // 264 × RGB888
     }
+    object PresetList: ParameterSpec<ByteArray> {
+        override val uuid = visualizerUuid(0x0011)
+        const val SIZE = 24 * 17 // 24 × {id: u8, name[16]: UTF-8}
+    }
+
+    object PresetSelectIndex: ParameterSpec<UByte> {
+        override val uuid = visualizerUuid(0x0012)
+    }
+
+    object PresetRead: ParameterSpec<ByteArray> {
+        override val uuid = visualizerUuid(0x0013)
+        const val SIZE = 222 // 222 B
+    }
+
+    object PresetSave: ParameterSpec<ByteArray> {
+        override val uuid = visualizerUuid(0x0014)
+        const val SIZE = 226 // 226 B
+    }
+
+    object PresetActivate: ParameterSpec<UByte> {
+        override val uuid = visualizerUuid(0x0015)
+    }
+
+    object PresetDelete: ParameterSpec<UByte> {
+        override val uuid = visualizerUuid(0x0016)
+    }
+
+    object PresetReadActivatedIndex: ParameterSpec<UByte> {
+        override val uuid = visualizerUuid(0x0017)
+    }
 }

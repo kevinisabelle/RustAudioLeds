@@ -20,4 +20,5 @@ data class Settings(
     var displayMode: DisplayMode = DisplayMode.Spectrum,
     var animationMode: AnimationMode = AnimationMode.Full,
     var ledsCount: Int = 60,
+    var currentPresetIndex: Int = 0,
 )

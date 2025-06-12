@@ -20,3 +20,5 @@ mod chrc_presets_select;
 mod chrc_presets_read;
 mod chrc_presets_save;
 mod chrc_presets_activate;
+mod chrc_presets_read_activated_index;
+mod chrc_presets_delete;

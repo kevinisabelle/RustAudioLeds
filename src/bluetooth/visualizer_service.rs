@@ -27,6 +27,8 @@ use crate::bluetooth::chrc_presets_read::get_preset_read_chrc;
 use crate::bluetooth::chrc_presets_select::get_preset_select_index_chrc;
 use crate::bluetooth::chrc_presets_save::get_preset_save_chrc;
 use crate::bluetooth::chrc_presets_activate::get_preset_activate_chrc;
+use crate::bluetooth::chrc_presets_delete::get_preset_delete_chrc;
+use crate::bluetooth::chrc_presets_read_activated_index::get_preset_activated_index_chrc;
 use crate::bluetooth::chrc_skew::{get_skew_chrc, SkewChrc};
 use crate::settings::Settings;
 
@@ -397,7 +399,31 @@ pub async fn get_visualizer_service(
         .add_characteristic_path(preset_activate_chrc.lock().unwrap().object_path().clone());
     visualizer_service.lock().unwrap().add_characteristic_path(preset_activate_chrc.lock().unwrap().object_path().clone());
 
+    // | 19 Preset Delete                | 3E0E0016-…-C3E63                         | Write WoR        | `u8`                           | Deletes a preset by `id` (0–23)                                                                                              |
 
+    // ------ Preset Delete characteristic ------
+    let preset_delete_chrc = get_preset_delete_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(preset_delete_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().add_characteristic_path(preset_delete_chrc.lock().unwrap().object_path().clone());
+
+    // ------ Preset Read Activated Index characteristic ------
+    let preset_read_activated_index_chrc = get_preset_activated_index_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(preset_read_activated_index_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().add_characteristic_path(preset_read_activated_index_chrc.lock().unwrap().object_path().clone());
 
     // ------ Service registration ------
     let visualizer_service_interface = VisualizerServiceInterface(visualizer_service.clone());
