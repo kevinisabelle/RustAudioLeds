@@ -3,6 +3,7 @@
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 
+
     // Hilt + KAPT for code generation
     id("com.google.dagger.hilt.android")
     kotlin("kapt")
@@ -63,4 +64,5 @@ dependencies {
 
     // --- Lottie for Compose animations ─────────────────────
     implementation("com.airbnb.android:lottie-compose:6.4.0")
+    testImplementation(kotlin("test"))
 }

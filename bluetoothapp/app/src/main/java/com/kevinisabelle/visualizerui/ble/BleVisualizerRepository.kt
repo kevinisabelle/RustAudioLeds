@@ -290,9 +290,10 @@ class BleVisualizerRepository(
     suspend fun activatePreset(index: Int): Boolean {
         return try {
             currentDevice?.write(ParameterSpec.PresetActivate, index.toUByte()) ?: false
+            true
         } catch (e: Exception) {
             false
-        } as Boolean
+        }
     }
 
     suspend fun deletePreset(index: Int): Boolean {

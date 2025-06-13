@@ -5,14 +5,12 @@ edition = "2024"
 
 [dependencies]
 serialport = { version = "4.7.2" }
-postcard = { version = "1.1.1", features = ["use-std"] }
-anyhow = "1.0.98"
 cpal = "0.15.3"
 spectrum-analyzer = "1.7.0"
 zbus = "5.5.0"
 tokio = { version = "1.44.0", features = ["rt", "rt-multi-thread", "macros", "time"] }
 macros = { path = "./macros" }
-serde = { version = "1.0.219", features = ["derive"] }
+flate2 = "1.1.2"
 
 [profile.release]
 opt-level = "z"

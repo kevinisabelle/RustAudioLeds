@@ -2,7 +2,7 @@
 use crate::bluez::utils::{register_object_with_path, ObjectInterfaces, ObjectPathTrait};
 use crate::constants::GATT_PRESET_SAVE_UUID; // e.g., "3E0E0014-7C7A-47B0-9FD5-1FC3044C3E63"
 use crate::{extend_chrc_props, object_path};
-use crate::presets::{Preset, save_preset};
+use crate::presets::{Preset, save_preset, decode_preset, encode_preset};
 use crate::settings::Settings;
 use macros::gatt_characteristic;
 use std::collections::HashMap;
@@ -50,15 +50,11 @@ impl PresetSaveChrcInterface {
         value: Vec<u8>,
         _opts: HashMap<String, OwnedValue>,
     ) -> zbus::fdo::Result<()> {
-        println!("Preset Save → value length: {}", value.len());
-        if value.len() != 222 {
-            return Err(zbus::fdo::Error::InvalidArgs(
-                format!("Expected 222 bytes, got {}", value.len()),
-            ));
-        }
         println!("Preset Save → value: {:?}", value);
-        let preset: Preset = postcard::from_bytes(&value)
+        let preset: Preset = decode_preset(&value)
             .map_err(|e| zbus::fdo::Error::Failed(format!("Decoding failed: {}", e)))?;
+
+        println!("Preset Save → index: {}", preset.index);
         save_preset(&preset)
             .map_err(|e| zbus::fdo::Error::Failed(format!("Saving failed: {}", e)))?;
         println!("Preset Save → index {}", preset.index);

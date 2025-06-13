@@ -37,5 +37,15 @@ value class Rgb888(val packed: UInt) {
                 b = (color.blue * 255).toInt().toUByte()
             )
         }
+
+        fun fromHex(string: String): Rgb888 {
+            if (string.length != 7 || string[0] != '#') {
+                throw IllegalArgumentException("Invalid hex color format: $string")
+            }
+            val r = string.substring(1, 3).toUByte(16)
+            val g = string.substring(3, 5).toUByte(16)
+            val b = string.substring(5, 7).toUByte(16)
+            return Rgb888(r, g, b)
+        }
     }
 }

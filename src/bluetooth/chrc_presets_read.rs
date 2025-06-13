@@ -3,7 +3,7 @@ use crate::constants::GATT_PRESET_READ_UUID;
 use crate::bluez::utils::{register_object_with_path, ObjectInterfaces, ObjectPathTrait};
 use crate::{extend_chrc_props, object_path};
 use crate::settings::Settings;
-use crate::presets::load_preset;
+use crate::presets::{encode_preset, load_preset};
 use macros::gatt_characteristic;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -42,9 +42,8 @@ object_path! {
         fn read_preset_data(&self) -> std::io::Result<Vec<u8>> {
             let idx = self.settings.lock().unwrap().selected_preset as u8;
             let preset = load_preset(idx)?;
-            let encoded = postcard::to_stdvec(&preset).map_err(|e| {
-                std::io::Error::new(std::io::ErrorKind::Other, format!("Encoding error: {}", e))
-            })?;
+            let encoded = encode_preset(&preset)
+                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
             Ok(encoded)
         }
     }

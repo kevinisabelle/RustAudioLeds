@@ -1,19 +1,26 @@
-﻿use std::sync::{Arc, Mutex};
-use serde::{Deserialize, Serialize};
-use crate::color::{color_from_string, Color};
+﻿use crate::color::{color_from_string, Color};
 use crate::DEFAULT_SMOOTH_SIZE;
 use crate::constants::{DEFAULT_SKEW, FFT_SIZE, FPS, GAIN, SAMPLE_RATE};
 
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-#[repr(u8)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum DisplayMode {
     Spectrum = 0,
     Oscilloscope = 1,
     ColorGradient = 2,
 }
 
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-#[repr(u8)]
+impl DisplayMode {
+    pub fn from_u8(value: u8) -> Option<DisplayMode> {
+        match value {
+            0 => Some(DisplayMode::Spectrum),
+            1 => Some(DisplayMode::Oscilloscope),
+            2 => Some(DisplayMode::ColorGradient),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub enum AnimationMode {
     Full = 0,
     FullWithMax = 1,
@@ -21,6 +28,20 @@ pub enum AnimationMode {
     FullMiddle = 3,
     FullMiddleWithMax = 4,
     PointsMiddle = 5,
+}
+
+impl AnimationMode {
+    pub fn from_u8(value: u8) -> Option<AnimationMode> {
+        match value {
+            0 => Some(AnimationMode::Full),
+            1 => Some(AnimationMode::FullWithMax),
+            2 => Some(AnimationMode::Points),
+            3 => Some(AnimationMode::FullMiddle),
+            4 => Some(AnimationMode::FullMiddleWithMax),
+            5 => Some(AnimationMode::PointsMiddle),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
