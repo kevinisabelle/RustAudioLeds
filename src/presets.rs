@@ -6,21 +6,21 @@ use crate::settings::{AnimationMode, DisplayMode, Settings};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Preset {
-    pub index: u8,
-    pub name: [u8; 16],
-    pub smooth_size: u16,
-    pub gain: f32,
-    pub fps: u16,
-    pub color1: [u8; 3],
-    pub color2: [u8; 3],
-    pub color3: [u8; 3],
-    pub fft_size: u16,
-    pub frequencies: [f32; 22],
-    pub gains: [f32; 22],
-    pub skew: f32,
-    pub brightness: f32,
-    pub display_mode: DisplayMode, // enum encoded as u8
-    pub animation_mode: AnimationMode, // enum encoded as u8
+    pub index: u8, // Index 0
+    pub name: [u8; 16], // Index 1-16
+    pub smooth_size: u16, // Index 17-18
+    pub gain: f32, // Index 19-22
+    pub fps: u16, // Index 23-24
+    pub color1: [u8; 3], // Index 25-27
+    pub color2: [u8; 3], // Index 28-30
+    pub color3: [u8; 3], // Index 31-33
+    pub fft_size: u16, // Index 34-35
+    pub frequencies: [f32; 22], // Number of bytes each frequency has 4 bytes, total 88 bytes for 22 frequencies, Index 36-99
+    pub gains: [f32; 22], // Number of bytes each gain has 4 bytes, total 88 bytes for 22 gains, Index 100-163
+    pub skew: f32, // Index 164-167
+    pub brightness: f32, // Index 168-171
+    pub display_mode: DisplayMode, // enum encoded as u8, // Index 172
+    pub animation_mode: AnimationMode, // enum encoded as u8, // Index 173
 }
 
 impl Preset {

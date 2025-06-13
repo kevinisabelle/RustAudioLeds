@@ -248,9 +248,32 @@ class BleVisualizerDevice private constructor(
         }
 
     private inner class IoContext {
-        fun ch(spec: ParameterSpec<*>): BluetoothGattCharacteristic =
-            gatt.getService(SERVICE_UUID)
-                ?.getCharacteristic(spec.uuid)
-                ?: error("Characteristic ${spec.uuid} not found!")
+        fun ch(spec: ParameterSpec<*>): BluetoothGattCharacteristic {
+            // First try the expected service UUID
+            val characteristic = gatt.getService(SERVICE_UUID)?.getCharacteristic(spec.uuid)
+
+            if (characteristic != null) {
+                return characteristic
+            }
+
+            // If not found, search all services
+            for (service in gatt.services) {
+                service.getCharacteristic(spec.uuid)?.let {
+                    println("Found characteristic ${spec.uuid} in unexpected service: ${service.uuid}")
+                    return it
+                }
+            }
+
+            // Log all available characteristics to help debugging
+            println("Characteristic ${spec.uuid} not found. Available characteristics:")
+            gatt.services.forEach { service ->
+                println("Service: ${service.uuid}")
+                service.characteristics.forEach { char ->
+                    println("  - ${char.uuid}")
+                }
+            }
+
+            error("Characteristic ${spec.uuid} not found!")
+        }
     }
 }

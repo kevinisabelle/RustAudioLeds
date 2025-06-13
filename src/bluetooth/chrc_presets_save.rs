@@ -50,11 +50,13 @@ impl PresetSaveChrcInterface {
         value: Vec<u8>,
         _opts: HashMap<String, OwnedValue>,
     ) -> zbus::fdo::Result<()> {
-        if value.len() != 226 {
+        println!("Preset Save → value length: {}", value.len());
+        if value.len() != 222 {
             return Err(zbus::fdo::Error::InvalidArgs(
-                format!("Expected 226 bytes, got {}", value.len()),
+                format!("Expected 222 bytes, got {}", value.len()),
             ));
         }
+        println!("Preset Save → value: {:?}", value);
         let preset: Preset = postcard::from_bytes(&value)
             .map_err(|e| zbus::fdo::Error::Failed(format!("Decoding failed: {}", e)))?;
         save_preset(&preset)

@@ -61,6 +61,14 @@ fun <T : Any> encode(spec: ParameterSpec<T>, value: T): ByteArray = when (spec) 
     ParameterSpec.LedCount         -> (value as UShort).toLeBytes()
     ParameterSpec.LedsBuffer       -> (value as ByteArray)
     ParameterSpec.LedsBuffer2      -> (value as ByteArray)
+    ParameterSpec.PresetList       -> (value as ByteArray)
+    ParameterSpec.PresetSelectIndex -> byteArrayOf((value as UByte).toByte())
+    ParameterSpec.PresetRead       -> (value as ByteArray)
+    ParameterSpec.PresetSave       -> (value as ByteArray)
+    ParameterSpec.PresetActivate   -> byteArrayOf((value as UByte).toByte())
+    ParameterSpec.PresetDelete     -> byteArrayOf((value as UByte).toByte())
+    ParameterSpec.PresetReadActivatedIndex -> byteArrayOf((value as UByte).toByte())
+
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -83,4 +91,11 @@ fun <T : Any> decode(spec: ParameterSpec<T>, bytes: ByteArray): T = when (spec) 
     ParameterSpec.LedCount         -> bytes.toUShort()    as T
     ParameterSpec.LedsBuffer       -> bytes                as T
     ParameterSpec.LedsBuffer2      -> bytes                as T
+    ParameterSpec.PresetList       -> bytes                as T
+    ParameterSpec.PresetSelectIndex -> bytes[0].toUByte() as T
+    ParameterSpec.PresetRead       -> bytes                as T
+    ParameterSpec.PresetSave       -> bytes                as T
+    ParameterSpec.PresetActivate   -> bytes[0].toUByte()  as T
+    ParameterSpec.PresetDelete     -> bytes[0].toUByte()  as T
+    ParameterSpec.PresetReadActivatedIndex -> bytes[0].toUByte() as T
 }

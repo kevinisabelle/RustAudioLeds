@@ -10,7 +10,10 @@ import androidx.compose.ui.graphics.Color
 import com.kevinisabelle.visualizerui.data.AnimationMode
 import com.kevinisabelle.visualizerui.data.DisplayMode
 import com.kevinisabelle.visualizerui.data.ParameterSpec
+import com.kevinisabelle.visualizerui.data.Preset
+import com.kevinisabelle.visualizerui.data.PresetEntry
 import com.kevinisabelle.visualizerui.data.Rgb888
+import com.kevinisabelle.visualizerui.data.decodePreset
 import com.kevinisabelle.visualizerui.services.Settings
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -248,20 +251,40 @@ class BleVisualizerRepository(
         currentDevice?.write(ParameterSpec.Fps, lng.toUShort())
     }
 
-    suspend fun getPresetList(): ByteArray? {
+    suspend fun getPresetList(): List<PresetEntry>? {
         return try {
-            currentDevice?.read(ParameterSpec.PresetList)
+            var list_bytes: ByteArray = currentDevice?.read(ParameterSpec.PresetList) ?: return null
+            var result: List<Preset> = emptyList()
+            // if the data is empty, return an empty list
+            if (list_bytes.isEmpty()) return emptyList()
+
+            // First byte is the count of presets
+            val count = list_bytes[0].toUByte()
+
+            // Remove the first byte (count) from the list
+            list_bytes = list_bytes.copyOfRange(1, list_bytes.size)
+
+            val presetEntries = list_bytes.toList().chunked(17).mapNotNull { chunk ->
+                if (chunk.size == 17) {
+                    val presetEntry = PresetEntry.fromByteArray(chunk.toByteArray())
+                    if (presetEntry.name.isNotEmpty()) {
+                        presetEntry
+                    } else {
+                        null // Skip empty names
+                    }
+                } else {
+                    null
+                }
+            }
+
+            presetEntries
         } catch (e: Exception) {
             null
         }
     }
 
-    suspend fun savePreset(presetData: ByteArray): Boolean {
-        return try {
-            currentDevice?.write(ParameterSpec.PresetSave, presetData) ?: false
-        } catch (e: Exception) {
-            false
-        } as Boolean
+    suspend fun savePreset(presetData: ByteArray) {
+        currentDevice?.write(ParameterSpec.PresetSave, presetData)
     }
 
     suspend fun activatePreset(index: Int): Boolean {
@@ -280,10 +303,19 @@ class BleVisualizerRepository(
         } as Boolean
     }
 
-    suspend fun readPreset(index: Int): ByteArray? {
+    suspend fun readPreset(index: Int): Preset? {
         return try {
             currentDevice?.write(ParameterSpec.PresetSelectIndex, index.toUByte())
-            currentDevice?.read(ParameterSpec.PresetRead)
+            val prop_result = currentDevice?.read(ParameterSpec.PresetRead)
+            if (prop_result == null) {
+                return null // Invalid preset data
+            }
+            val preset = decodePreset(prop_result)
+            if (preset.name.isEmpty()) {
+                null // Return null if the preset name is empty
+            } else {
+                preset
+            }
         } catch (e: Exception) {
             null
         }

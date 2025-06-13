@@ -14,7 +14,7 @@ use crate::bluez::utils::{find_adapter, register_object_with_path, ObjectInterfa
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use zbus::{interface, Connection, Proxy};
-use crate::bluetooth::visualizer_service::{get_visualizer_service, VisualizerService};
+use crate::bluetooth::service_visualizer::{get_visualizer_service, VisualizerService};
 use crate::settings::Settings;
 
 /// **Placeholder** for the concrete service you’ll implement separately.

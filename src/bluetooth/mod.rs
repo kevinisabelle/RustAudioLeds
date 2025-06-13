@@ -1,5 +1,5 @@
 ﻿pub mod visualizer_app;
-mod visualizer_service;
+mod service_visualizer;
 mod chrc_smooth_size;
 mod chrc_gain;
 mod chrc_fps;

@@ -40,10 +40,14 @@ import com.kevinisabelle.visualizerui.R
 import com.kevinisabelle.visualizerui.ble.BleVisualizerRepository
 import com.kevinisabelle.visualizerui.data.AnimationMode
 import com.kevinisabelle.visualizerui.data.DisplayMode
+import com.kevinisabelle.visualizerui.data.Preset
+import com.kevinisabelle.visualizerui.data.PresetEntry
 import com.kevinisabelle.visualizerui.data.Rgb888
+import com.kevinisabelle.visualizerui.data.encodePreset
 import com.kevinisabelle.visualizerui.services.Settings
 import com.kevinisabelle.visualizerui.ui.components.DeviceSettings
 import com.kevinisabelle.visualizerui.ui.components.LedPreview
+import com.kevinisabelle.visualizerui.ui.components.PresetsList
 import com.kevinisabelle.visualizerui.ui.components.TitleRow
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -180,7 +184,7 @@ fun DashboardScreen(
                             )
                             {
                                 IconButton(
-                                    onClick = { viewModel.getSettings() },
+                                    onClick = { viewModel.refreshSettings() },
                                     modifier = Modifier.padding(start = 8.dp)
                                 ) {
                                     Icon(
@@ -212,7 +216,7 @@ fun DashboardScreen(
                                     )
                                 } else {
                                     Button(
-                                        onClick = { viewModel.getSettings() },
+                                        onClick = { viewModel.refreshSettings() },
                                         modifier = Modifier.padding(16.dp)
                                     ) {
                                         Text("Load Settings")
@@ -265,16 +269,22 @@ fun DashboardScreen(
                         onSetAnimationMode = { mode ->
                             viewModel.setAnimationMode(mode)
                         },
-                        onRefreshClick = { viewModel.getSettings() },
+                        onRefreshClick = { viewModel.refreshSettings() },
+                        onSaveClick = { name -> viewModel.savePreset(name) }
                     )
                 }
 
                 "Presets" -> {
-                    // Presets UI would go here
-                    Text(
-                        text = "Presets feature is not implemented yet.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center
+                    PresetsList(
+                        presets = ui.presets,
+                        onRefreshClick = { viewModel.refreshPresets() },
+                        onPresetSelected = { preset ->
+                            viewModel.activatePreset(preset.index.toInt())
+                            viewModel.gotoPanel("Visualizer")
+                        },
+                        onPresetDeleted = {
+                            viewModel.deletePreset(it.index.toInt())
+                        },
                     )
                 }
             }
@@ -301,7 +311,8 @@ class DashboardViewModel @Inject constructor(
         ),
         val currentPanel: String = "Visualizer",
         val loading : Boolean = false,
-        val previewAnimation: Boolean = false
+        val previewAnimation: Boolean = false,
+        val presets: List<Preset> = emptyList()
     )
 
     private val _ui = MutableStateFlow(Ui())
@@ -315,13 +326,80 @@ class DashboardViewModel @Inject constructor(
         // println("LED colors updated: ${_ui.value.ledColors.size} LEDs")
     }
 
+    fun refreshPresets() = viewModelScope.launch {
+        val presetEntiesList : List<PresetEntry>? = repo.getPresetList()
+        // If no presets are available, return early
+        if (presetEntiesList.isNullOrEmpty()) {
+            _ui.update { it.copy(presets = emptyList()) }
+            return@launch
+        }
+
+        var presetsListObjects: List<Preset> = emptyList()
+        for (preset in presetEntiesList) {
+            // Ensure each preset is compatible with the current settings
+            val presetObj = repo.readPreset(preset.index.toInt())
+
+            if (presetObj == null) {
+                println("Preset with index ${preset.index} is null, skipping.")
+                continue
+            }
+
+            presetsListObjects = presetsListObjects + presetObj
+        }
+        _ui.update { it.copy(presets = presetsListObjects) }
+    }
+
+    fun savePreset(name: String) = viewModelScope.launch {
+        println("Saving preset with name: $name")
+        var current_preset_index = _ui.value.settings?.currentPresetIndex
+        println("Current preset index: $current_preset_index")
+
+        var preset = Preset.fromSettings(_ui.value.settings)
+        preset.name = name.take(Preset.NAME_MAX_LENGTH) // Ensure name is within max length
+
+        val existingIds = _ui.value.presets.map { it.index.toInt() } // Get existing preset indices
+        // find first available index (0-23) - return 0 if all are available, curent_preset_index if it is not 255
+        // keep in mind that the list can be empty or have less than 24 presets that could have "holes"
+        current_preset_index = existingIds.indexOfFirst { it == current_preset_index }
+        if (current_preset_index == -1) {
+            // Order the indices and find the first available index
+            val availableIndex = (0..23).firstOrNull { it !in existingIds }
+            current_preset_index = availableIndex ?: 0 // If no available index, default to 0
+        }
+
+        println("Using preset index: $current_preset_index")
+
+        preset.index = current_preset_index.toUByte() // Set the index of the preset
+
+        repo.savePreset(encodePreset(preset))
+        refreshPresets()
+    }
+
+    fun deletePreset(index: Int) = viewModelScope.launch {
+        repo.deletePreset(index)
+        refreshPresets()
+    }
+
+    fun activatePreset(index: Int) = viewModelScope.launch {
+        repo.activatePreset(index)
+        refreshSettings()
+        refreshLedColors()
+    }
+
     fun gotoPanel(panel: String) = viewModelScope.launch {
         if (panel in _ui.value.panels) {
             _ui.update { it.copy(currentPanel = panel) }
+
+            // Refresh data when switching to specific panels
+            when (panel) {
+                "Presets" -> refreshPresets()
+                "Settings" -> refreshSettings()
+                "Visualizer" -> refreshLedColors()
+            }
         }
     }
 
-    fun getSettings() = viewModelScope.launch {
+    fun refreshSettings() = viewModelScope.launch {
         _ui.update { it.copy(settings = null, loading = true) } // Reset settings before fetching
         val settings = repo.getSettings()
         _ui.update { it.copy(settings = settings, loading = false) }

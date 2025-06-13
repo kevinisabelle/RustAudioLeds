@@ -2,12 +2,33 @@
 
 import com.kevinisabelle.visualizerui.ble.toByte
 import com.kevinisabelle.visualizerui.ble.toBytes
+import com.kevinisabelle.visualizerui.ble.toFloatLe
 import com.kevinisabelle.visualizerui.ble.toLeBytes
-import com.kevinisabelle.visualizerui.ble.toUShort
+// import com.kevinisabelle.visualizerui.ble.toUShort
+import com.kevinisabelle.visualizerui.services.Settings
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+
+const val PRESET_PAYLOAD_SIZE =
+        1 /*index [0]*/ +
+        16 /*name [1]*/ +
+        2 /*smoothSize [17]*/ +
+        4 /*gain [19]*/ +
+        2 /*fps [23]*/ +
+        3 /*color1 [25]*/ +
+        3 /*color2 [28]*/ +
+        3 /*color3 [31]*/ +
+        2 /*fftSize [34]*/ +
+        22 * 4 /*frequencies [36]*/ +
+        22 * 4 /*gains [100]*/ +
+        4 /*skew [164]*/ +
+        4 /*brightness [168]*/ +
+        1 /*displayMode [172]*/ +
+        1 /*animationMode [173]*/
 
 data class Preset(
-    val index: UByte,
-    val name: String,
+    var index: UByte,
+    var name: String, // Must be <= Preset.NAME_MAX_LENGTH
     val smoothSize: UShort,
     val gain: Float,
     val fps: UShort,
@@ -23,7 +44,51 @@ data class Preset(
     val animationMode: AnimationMode
 ) {
     companion object {
+        fun fromSettings(settings: Settings?) : Preset {
+
+            if (settings == null) {
+                throw IllegalArgumentException("Settings cannot be null")
+            }
+
+            return Preset(
+                index = settings.currentPresetIndex.toUByte(),
+                name = "Preset ${settings.currentPresetIndex}",
+                smoothSize = settings.smoothSize.toUShort(),
+                gain = settings.gain,
+                fps = settings.fps.toUShort(),
+                color1 = settings.color1,
+                color2 = settings.color2,
+                color3 = settings.color3,
+                fftSize = settings.fftSize,
+                frequencies = settings.frequencies,
+                gains = settings.gains,
+                skew = settings.skew,
+                brightness = settings.brightness,
+                displayMode = settings.displayMode,
+                animationMode = settings.animationMode
+            )
+
+        }
+
         const val NAME_MAX_LENGTH = 16
+    }
+}
+
+data class PresetEntry(
+    val index: UByte,
+    val name: String
+) {
+
+    companion object {
+        const val NAME_MAX_LENGTH = 16
+
+        fun fromByteArray(data: ByteArray): PresetEntry {
+            require(data.size == 17) { "Invalid preset entry data size" }
+            val index = data[0].toUByte()
+            val name = data.copyOfRange(1, 17).decodeToString().trimEnd('\u0000')
+            require(name.length <= NAME_MAX_LENGTH) { "Preset entry name exceeds maximum length" }
+            return PresetEntry(index, name)
+        }
     }
 }
 
@@ -36,13 +101,18 @@ private fun ByteArray.toUInt(): UInt {
     return result
 }
 
+private fun ByteArray.toUShort(): UShort {
+    require(size == 2) { "ByteArray must be exactly 2 bytes to convert to UShort" }
+    return ByteBuffer.wrap(this).short.toUShort()
+}
+
 private fun ByteArray.toFloat(): Float {
     require(size == 4) { "ByteArray must be exactly 4 bytes to convert to Float" }
-    return java.nio.ByteBuffer.wrap(this).float
+    return ByteBuffer.wrap(this).float.toFloat()
 }
 
 fun decodePreset(data: ByteArray): Preset {
-    require(data.size == 24 + 3 * 3 + 2 * 22 + 2 + 4 + 4 + 1 + 1) { "Invalid postcard preset data size" }
+    // require(data.size == PRESET_PAYLOAD_SIZE) { "Invalid postcard preset data size" }
 
     val index = data[0].toUByte()
     val name = data.copyOfRange(1, 17).decodeToString().trimEnd('\u0000')
@@ -56,10 +126,11 @@ fun decodePreset(data: ByteArray): Preset {
     val color2 = Rgb888(data.sliceArray(28..30).toUInt())
     val color3 = Rgb888(data.sliceArray(31..33).toUInt())
 
+    // The fftSize is stored as a 2-byte unsigned short (little-endian).
     val fftSize = data.sliceArray(34..35).toUShort()
 
     val frequencies = List(22) { i ->
-        data.sliceArray(36 + i * 4 until 40 + i * 4).toFloat()
+        data.sliceArray(36 + i * 4 until 40 + i * 4).toFloatLe()
     }
 
     val gains = List(22) { i ->
@@ -93,7 +164,7 @@ fun decodePreset(data: ByteArray): Preset {
 
 fun encodePreset(preset: Preset): ByteArray {
     val nameBytes = preset.name.encodeToByteArray().copyOf(Preset.NAME_MAX_LENGTH)
-    val data = ByteArray(24 + 3 * 3 + 2 * 22 + 2 + 4 + 4 + 1 + 1)
+    val data = ByteArray(PRESET_PAYLOAD_SIZE)
 
     data[0] = preset.index.toByte()
     System.arraycopy(nameBytes, 0, data, 1, nameBytes.size)
@@ -115,7 +186,7 @@ fun encodePreset(preset: Preset): ByteArray {
     }
 
     for (i in preset.gains.indices) {
-        System.arraycopy(preset.gains[i].toLeBytes(), 0, data, 100 + i * 4, 4)
+        System.arraycopy(preset.gains[i].toLeBytes(), 0, data, 124 + i * 4, 4)
     }
 
     System.arraycopy(preset.skew.toLeBytes(), 0, data, 164, 4)

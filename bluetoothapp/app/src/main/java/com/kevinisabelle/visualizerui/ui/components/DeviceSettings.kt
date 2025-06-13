@@ -9,10 +9,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Preview
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.SavedSearch
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,8 +48,10 @@ fun DeviceSettings(
     onSetFrequencyGain: (Int, Float) -> Unit, // Default empty function for frequency gain
     onSetSmoothSize: (Int) -> Unit,
     onSetSkew: (Float) -> Unit = { }, // Default empty function for skew
-    onRefreshClick: () -> Unit = { } // Default empty function for refresh action
+    onRefreshClick: () -> Unit = { }, // Default empty function for refresh action
+    onSaveClick: (String) -> Unit = { } // Default empty function for save action
 ) {
+    var showSaveConfirmationDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
     Column(
         modifier = Modifier.padding(8.dp).verticalScroll(scrollState),
@@ -78,12 +78,22 @@ fun DeviceSettings(
                 modifier = Modifier.weight(1f)
             )
             IconButton(
-                onClick = { },
+                onClick = { showSaveConfirmationDialog = true },
                 modifier = Modifier.padding(start = 8.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Save,
-                    contentDescription = "Reload settings"
+                    contentDescription = "Save presets settings"
+                )
+            }
+
+            if (showSaveConfirmationDialog) {
+                NameInputDialog(
+                    onDismiss = { showSaveConfirmationDialog = false },
+                    onConfirm = { name ->
+                        showSaveConfirmationDialog = false
+                        onSaveClick(name)
+                    }
                 )
             }
         }
