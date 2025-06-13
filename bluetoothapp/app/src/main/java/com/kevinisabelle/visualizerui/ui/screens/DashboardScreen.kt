@@ -334,10 +334,14 @@ class DashboardViewModel @Inject constructor(
             return@launch
         }
 
+        println("Refreshing presets, found ${presetEntiesList.size} entries")
+
         var presetsListObjects: List<Preset> = emptyList()
         for (preset in presetEntiesList) {
             // Ensure each preset is compatible with the current settings
+            println("Reading preset with index: ${preset.index}")
             val presetObj = repo.readPreset(preset.index.toInt())
+            println("Preset object: $presetObj")
 
             if (presetObj == null) {
                 println("Preset with index ${preset.index} is null, skipping.")
@@ -388,7 +392,6 @@ class DashboardViewModel @Inject constructor(
 
     fun gotoPanel(panel: String) = viewModelScope.launch {
         if (panel in _ui.value.panels) {
-            _ui.update { it.copy(currentPanel = panel) }
 
             // Refresh data when switching to specific panels
             when (panel) {
@@ -396,6 +399,8 @@ class DashboardViewModel @Inject constructor(
                 "Settings" -> refreshSettings()
                 "Visualizer" -> refreshLedColors()
             }
+
+            _ui.update { it.copy(currentPanel = panel) }
         }
     }
 

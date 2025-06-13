@@ -7,8 +7,7 @@ import com.kevinisabelle.visualizerui.data.ParameterSpec
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import android.util.Log
 import java.util.UUID
 
 class BleVisualizerDevice private constructor(
@@ -25,11 +24,13 @@ class BleVisualizerDevice private constructor(
 
     @SuppressLint("MissingPermission")
     suspend fun <T : Any> read(spec: ParameterSpec<T>): T? = doGattIo {
-        println("Reading characteristic ${spec.uuid}...")
+        Log.d("BleVisualizerDevice", "Attempting to read characteristic ${spec.uuid}...")
         try {
             val ch = ch(spec)
             gatt.readCharacteristic(ch)
-            val result = eventFlow.first {
+            val result = eventFlow.onEach { event ->
+                println("Received event: $event")
+            }.first {
                 it is GattEvent.Result &&
                         it.type == ResultType.Read &&
                         it.uuid == spec.uuid
@@ -41,12 +42,12 @@ class BleVisualizerDevice private constructor(
                 )
             }
             // decode needs to be inside the try block if ch is declared inside
-            println("Characteristic ${spec.uuid} read successfully.")
+            Log.d("BleVisualizerDevice", "Read successful for characteristic ${spec.uuid}.")
             return@doGattIo decode(spec, ch.value ?: error("Characteristic ${spec.uuid} has no value!"))
         }
         catch (e: IllegalStateException) {
             // If the read operation was cancelled or failed, or characteristic not found.
-            println("Read operation for characteristic ${spec.uuid} was cancelled or failed: ${e.message}")
+            Log.e("BleVisualizerDevice", "Error reading characteristic ${spec.uuid}: ${e.message}")
             return@doGattIo null
         }
     }
@@ -56,23 +57,24 @@ class BleVisualizerDevice private constructor(
     suspend fun <T : Any> write(spec: ParameterSpec<T>, value: T) {
         doGattIo {
             try {
-            println("Attempting to write to characteristic ${spec.uuid} with value: $value (no response)...")
+                Log.d("BleVisualizerDevice", "Attempting to write to characteristic ${spec.uuid} with value: $value (no response)...")
             val ch = ch(spec)
             ch.value = encode(spec, value)
             ch.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
 
             if (!gatt.writeCharacteristic(ch)) {
                 // This means the write operation could not even be initiated.
-                    println("Failed to initiate write operation for characteristic ${spec.uuid}")
+                Log.e("BleVisualizerDevice", "Failed to initiate write operation for characteristic ${spec.uuid}")
                     return@doGattIo
             }
 
             // For WRITE_TYPE_NO_RESPONSE, the onCharacteristicWrite callback is not triggered.
             // If gatt.writeCharacteristic(ch) returns true, the operation was successfully initiated.
             // There will be no further confirmation from the BLE stack for this type of write.
-            println("Write (no response) to characteristic ${spec.uuid} initiated successfully.")
+            Log.d("BleVisualizerDevice", "Write (no response) to characteristic ${spec.uuid} initiated successfully.")
             } catch (e: Exception) {
-                println("Error writing to characteristic ${spec.uuid}: ${e.message}")
+                Log.e("BleVisualizerDevice", "Error writing to characteristic ${spec.uuid}: ${e.message}")
+                // throw IllegalStateException("Failed to write to characteristic ${spec.uuid}", e)
             }
         }
     }
@@ -133,7 +135,6 @@ class BleVisualizerDevice private constructor(
 
     private lateinit var gatt: BluetoothGatt
     private val _state = MutableStateFlow<ConnectionState>(ConnectionState.Connecting)
-    private val ioMutex = Mutex()
 
     @SuppressLint("MissingPermission")
     private val eventFlow: SharedFlow<GattEvent> = callbackFlow<GattEvent> {
@@ -189,9 +190,9 @@ class BleVisualizerDevice private constructor(
             override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
                 super.onMtuChanged(gatt, mtu, status)
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    println("MTU successfully changed to: $mtu. Max data per packet for read: ${mtu - 1}")
+                    Log.d("BleVisualizerDevice", "MTU successfully changed to: $mtu. Max data per packet for read: ${mtu - 1}")
                 } else {
-                    println("MTU change request failed. Status: $status. Current MTU likely remains default or previous.")
+                    Log.e("BleVisualizerDevice", "MTU change request failed. Status: $status. Current MTU likely remains default or previous.")
                 }
             }
 
@@ -201,7 +202,7 @@ class BleVisualizerDevice private constructor(
                                               status: Int) {
                 // Log the size of the data received by the callback
                 val data = characteristic.value
-                println("onCharacteristicRead: UUID=${characteristic.uuid}, Status=$status, Received Size=${data?.size ?: 0}")
+                Log.d("BleVisualizerDevice","onCharacteristicRead: UUID=${characteristic.uuid}, Status=$status, Received Size=${data?.size ?: 0}")
                 if (data != null && data.size == 512) {
                     // Replace "YOUR_LEDS_BUFFER_CHAR_UUID_STRING" with the actual UUID string of your leds_buffer
                     println("onCharacteristicRead: WARNING - Received exactly 512 bytes for leds_buffer. Full data might be truncated by peripheral.")
@@ -238,13 +239,16 @@ class BleVisualizerDevice private constructor(
                 throw IllegalStateException("Services ready, but device not in Connected state. Current state: ${state.value}")
             }
 
-            ioMutex.withLock {
+            // Print IO Mutex state for debugging
+            // println("Acquiring IO mutex for I/O operation... Current state is locked: ${ioMutex.isLocked}")
+
+            //ioMutex.withLock {
                 // Re-check connection state inside the mutex critical section.
-                if (state.value !is ConnectionState.Connected) {
-                    throw IllegalStateException("Device disconnected while awaiting I/O operation. Current state: ${state.value}")
-                }
-                block(IoContext())
-            }
+            /*if (state.value !is ConnectionState.Connected) {
+                throw IllegalStateException("Device disconnected while awaiting I/O operation. Current state: ${state.value}")
+            }*/
+            block(IoContext())
+            //}
         }
 
     private inner class IoContext {

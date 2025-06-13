@@ -208,20 +208,20 @@ fn decode_preset_csv(csv: &str) -> Result<Preset, PresetCsvError> {
     let index = parts[0].parse::<u8>().map_err(|e| PresetCsvError::ParseError(format!("Index: {}", e)))?;
     let name_str = parts[1].trim();
     let name = string_to_name_bytes(name_str);
-    println!("Decoded preset name: {}", name_str);
+    // println!("Decoded preset name: {}", name_str);
 
     let smooth_size = parts[2].parse::<u16>().map_err(|e| PresetCsvError::ParseError(format!("Smooth Size: {}", e)))?;
     let gain = parts[3].parse::<f32>().map_err(|e| PresetCsvError::ParseError(format!("Gain: {}", e)))?;
     let fps = parts[4].parse::<u16>().map_err(|e| PresetCsvError::ParseError(format!("FPS: {}", e)))?;
-    println!("Decoded smooth size: {}, gain: {:.3}, fps: {}", smooth_size, gain, fps);
+    // println!("Decoded smooth size: {}, gain: {:.3}, fps: {}", smooth_size, gain, fps);
 
     let color1 = hex_to_rgb(parts[5])?;
     let color2 = hex_to_rgb(parts[6])?;
     let color3 = hex_to_rgb(parts[7])?;
-    println!("Decoded colors: {:?}, {:?}, {:?}", color1, color2, color3);
+    // println!("Decoded colors: {:?}, {:?}, {:?}", color1, color2, color3);
 
     let fft_size = parts[8].parse::<u16>().map_err(|e| PresetCsvError::ParseError(format!("FFT Size: {}", e)))?;
-    println!("Decoded FFT size: {}", fft_size);
+    // println!("Decoded FFT size: {}", fft_size);
 
     let parse_f32_array = |s: &str, context: &str| -> Result<[f32; 22], PresetCsvError> {
         let content = s.strip_prefix('[').unwrap_or(s).strip_suffix(']').unwrap_or(s);
@@ -236,7 +236,7 @@ fn decode_preset_csv(csv: &str) -> Result<Preset, PresetCsvError> {
 
     let skew = parts[11].parse::<f32>().map_err(|e| PresetCsvError::ParseError(format!("Skew: {}", e)))?;
     let brightness = parts[12].parse::<f32>().map_err(|e| PresetCsvError::ParseError(format!("Brightness: {}", e)))?;
-    println!("Decoded skew: {:.3}, brightness: {:.3}", skew, brightness);
+    // println!("Decoded skew: {:.3}, brightness: {:.3}", skew, brightness);
 
     let display_mode_val = parts[13].parse::<u8>().map_err(|e| PresetCsvError::ParseError(format!("Display Mode: {}", e)))?;
     let display_mode = DisplayMode::from_u8(display_mode_val) // Assuming DisplayMode::from_u8(u8) -> Option<DisplayMode>
@@ -274,9 +274,9 @@ pub fn encode_preset(preset: &Preset) -> std::io::Result<Vec<u8>> {
 pub fn decode_preset(data: &[u8]) -> std::io::Result<Preset> {
     let mut decoder = ZlibDecoder::new(data);
     let mut decompressed_bytes = Vec::new();
-    println!("Decoding preset data of length: {}", data.len());
+    // println!("Decoding preset data of length: {}", data.len());
     decoder.read_to_end(&mut decompressed_bytes)?;
-    println!("Decompressed preset data length: {}", decompressed_bytes.len());
+    // println!("Decompressed preset data length: {}", decompressed_bytes.len());
     let content_string = String::from_utf8(decompressed_bytes.clone())
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, format!("UTF-8 decoding error: {}", e)))?;
     println!("Decoded preset content: {}", content_string);
