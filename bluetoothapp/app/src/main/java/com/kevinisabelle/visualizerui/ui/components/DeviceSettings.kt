@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DisabledByDefault
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
@@ -54,7 +55,8 @@ fun DeviceSettings(
     onSetSmoothSize: (Int) -> Unit,
     onSetSkew: (Float) -> Unit = { }, // Default empty function for skew
     onRefreshClick: () -> Unit = { }, // Default empty function for refresh action
-    onSaveClick: (String) -> Unit = { } // Default empty function for save action
+    onSaveClick: (String) -> Unit = { }, // Default empty function for save action,
+    onNewPresetClick: () -> Unit = { } // Default empty function for new preset action
 ) {
     var showSaveConfirmationDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
@@ -95,6 +97,7 @@ fun DeviceSettings(
 
             if (showSaveConfirmationDialog) {
                 NameInputDialog(
+                    initialName = currentPreset?.name ?: "",
                     onDismiss = { showSaveConfirmationDialog = false },
                     onConfirm = { name ->
                         showSaveConfirmationDialog = false
@@ -113,6 +116,16 @@ fun DeviceSettings(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f)
                 )
+
+                IconButton(
+                    onClick = { onNewPresetClick() },
+                    modifier = Modifier.rotate(180f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DisabledByDefault,
+                        contentDescription = "New preset"
+                    )
+                }
             } else {
                 Text(
                     text = "No preset selected",
@@ -537,5 +550,9 @@ fun DeviceSettingsPreview() {
                 animationMode = AnimationMode.Full
             )
         ),
+        onNewPresetClick = {
+            currentSettings.currentPresetIndex = 255
+
+        }
     )
 }

@@ -84,7 +84,7 @@ pub fn get_config() -> Settings {
         color3: color_from_string("magenta"),
         fft_size: FFT_SIZE,
         skew: DEFAULT_SKEW,
-        brightness: 0.0,
+        brightness: 1.0,
         display_mode: DisplayMode::Spectrum,
         frequencies: vec![41.0, 55.0, 65.0, 82.0, 110.0, 146.0, 220.0, 261.0, 329.0, 392.0,
                           440.0, 523.0, 880.0, 987.0, 2000.0, 3000.0, 4000.0, 5000.0, 6000.0, 7500.0,

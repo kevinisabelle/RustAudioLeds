@@ -272,7 +272,8 @@ fun DashboardScreen(
                             viewModel.setAnimationMode(mode)
                         },
                         onRefreshClick = { viewModel.refreshSettings() },
-                        onSaveClick = { name -> viewModel.savePreset(name) }
+                        onSaveClick = { name -> viewModel.savePreset(name) },
+                        onNewPresetClick = { viewModel.activatePreset(255) }
                     )
                 }
 

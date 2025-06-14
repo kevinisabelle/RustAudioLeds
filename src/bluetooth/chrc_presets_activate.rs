@@ -53,6 +53,17 @@ impl PresetActivateChrcInterface {
             return Err(zbus::fdo::Error::InvalidArgs("Requires 1 byte".into()));
         }
         let id = value[0];
+
+        if id == 255
+        {
+            // Just set the selected preset to 255
+            let mut locked = self.0.lock().unwrap();
+            let mut settings = locked.settings.lock().unwrap();
+            settings.active_preset = 255;
+            println!("Activated preset ID: 255 (No preset selected)");
+            return Ok(());
+        }
+
         let preset = load_preset(id)
             .map_err(|e| zbus::fdo::Error::Failed(format!("Load preset failed: {}", e)))?;
 

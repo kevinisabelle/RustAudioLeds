@@ -94,7 +94,7 @@ fn get_strip_colors(level: f32, max: f32, settings: &Settings, index: usize) -> 
         DisplayMode::ColorGradient => {
             for i in 0..LEDS_PER_STRIP {
                 let mix_factor = (i+1) as f32 / LEDS_PER_STRIP as f32;
-                let color = settings.color1.clone().mix(&settings.color2.clone(), mix_factor);
+                let color = settings.color1.clone().mix(&settings.color2.clone(), mix_factor).brightness(settings.brightness.clone());
                 strip_colors[i] = color.clone();
             }
         }
@@ -117,14 +117,14 @@ pub fn full_spectrum(
     for i in 0..num_leds_to_light {
         let mix_factor = (i+1) as f32 / num_leds_to_light as f32;
         let color = color1.mix(&color2, mix_factor);
-        strip_colors[i] = color.clone(); //.brightness(1.0 - (i as f32 / num_leds_to_light as f32));
+        strip_colors[i] = color.clone().brightness(settings_arc.brightness.clone());
 
         if num_leds_to_light == 1 && i == 0 {
-            strip_colors[i] = color2.mix(&color1.clone(), leftover_value).clone();
+            strip_colors[i] = color2.mix(&color1.clone(), leftover_value).clone().brightness(settings_arc.brightness.clone());
         }
 
         if i == num_leds_to_light - 1 {
-            strip_colors[i] = strip_colors[i].brightness(leftover_value);
+            strip_colors[i] = strip_colors[i].brightness(leftover_value).brightness(settings_arc.brightness.clone());
         }
     }
 }
@@ -137,7 +137,7 @@ pub fn full_spectrum_with_max(
     strip_colors: &mut Vec<Color>,
 ) {
     full_spectrum(level, index, settings_arc, strip_colors);
-    strip_colors[LEDS_PER_STRIP-1] = settings_arc.color3.clone().brightness(level.min(1.0));
+    strip_colors[LEDS_PER_STRIP-1] = settings_arc.color3.clone().brightness(level.min(1.0)).brightness(settings_arc.brightness.clone());
 }
 
 pub fn points_spectrum(
@@ -153,9 +153,9 @@ pub fn points_spectrum(
     first_led_index = first_led_index.min(LEDS_PER_STRIP - 1);
     let color_to_use = settings_arc.color1.clone().mix(&settings_arc.color2.clone(), level);
 
-    strip_colors[first_led_index] = color_to_use.brightness(1.0 - factor);
+    strip_colors[first_led_index] = color_to_use.brightness(1.0 - factor).brightness(settings_arc.brightness.clone());
     if last_led_index < LEDS_PER_STRIP {
-        strip_colors[last_led_index] = color_to_use.brightness(factor);
+        strip_colors[last_led_index] = color_to_use.brightness(factor).brightness(settings_arc.brightness.clone());
     }
 }
 
@@ -177,17 +177,17 @@ pub fn spectrum_middle(
     for i in 0..num_leds_to_light {
         let mix_factor = (i + 1) as f32 / num_leds_to_light as f32;
         let color = color1.mix(&color2, mix_factor);
-        strip_colors[middle_index - i - 1] = color.clone();
-        strip_colors[middle_index + i] = color.clone();
+        strip_colors[middle_index - i - 1] = color.clone().brightness(settings_arc.brightness.clone());
+        strip_colors[middle_index + i] = color.clone().brightness(settings_arc.brightness.clone());
 
         if num_leds_to_light == 1 && i == 0 {
-            strip_colors[middle_index - i - 1] = color2.mix(&color1.clone(), leftover_value).clone();
-            strip_colors[middle_index + i] = strip_colors[middle_index - i - 1].clone();
+            strip_colors[middle_index - i - 1] = color2.mix(&color1.clone(), leftover_value).clone().brightness(settings_arc.brightness.clone());
+            strip_colors[middle_index + i] = strip_colors[middle_index - i - 1].clone().brightness(settings_arc.brightness.clone());
         }
 
         if i == num_leds_to_light - 1 {
-            strip_colors[middle_index - i - 1] = strip_colors[middle_index - i - 1].brightness(leftover_value);
-            strip_colors[middle_index + i] = strip_colors[middle_index + i].brightness(leftover_value);
+            strip_colors[middle_index - i - 1] = strip_colors[middle_index - i - 1].brightness(leftover_value).brightness(settings_arc.brightness.clone());
+            strip_colors[middle_index + i] = strip_colors[middle_index + i].brightness(leftover_value).brightness(settings_arc.brightness.clone());
         }
     }
 }
@@ -200,6 +200,6 @@ pub fn spectrum_middle_with_max(
     strip_colors: &mut Vec<Color>,
 ) {
     spectrum_middle(level, index, settings_arc, strip_colors);
-    strip_colors[LEDS_PER_STRIP-1] = settings_arc.color3.clone().brightness(level.min(1.0));
-    strip_colors[0] = settings_arc.color3.clone().brightness(level.min(1.0));
+    strip_colors[LEDS_PER_STRIP-1] = settings_arc.color3.clone().brightness(level.min(1.0)).brightness(settings_arc.brightness.clone());
+    strip_colors[0] = settings_arc.color3.clone().brightness(level.min(1.0)).brightness(settings_arc.brightness.clone());
 }
