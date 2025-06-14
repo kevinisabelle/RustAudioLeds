@@ -1,5 +1,6 @@
 ﻿package com.kevinisabelle.visualizerui.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.Row
@@ -21,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue //
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
@@ -28,14 +30,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kevinisabelle.visualizerui.data.AnimationMode
 import com.kevinisabelle.visualizerui.data.DisplayMode
+import com.kevinisabelle.visualizerui.data.Preset
 import com.kevinisabelle.visualizerui.data.Rgb888
 import com.kevinisabelle.visualizerui.services.Settings
 
 @Composable
 fun DeviceSettings(
     settings: Settings,
+    presets: List<Preset>,
     onSetColor1: (Rgb888) -> Unit,
     onSetColor2: (Rgb888) -> Unit,
     onSetColor3: (Rgb888) -> Unit,
@@ -53,13 +58,14 @@ fun DeviceSettings(
 ) {
     var showSaveConfirmationDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+    val currentPreset = presets.find { it.index == settings.currentPresetIndex.toUByte() }
     Column(
-        modifier = Modifier.padding(8.dp).verticalScroll(scrollState),
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+        modifier = Modifier.padding(horizontal = 20.dp).verticalScroll(scrollState),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         )
         {
             IconButton(
@@ -97,23 +103,31 @@ fun DeviceSettings(
                 )
             }
         }
-        TitleRow(title = "Brightness ${settings.brightness.toString().take(4)}")
-        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            Slider(
-                value = settings.brightness,
-                onValueChange = { newValue ->
-                    onSetBrightness(newValue)
-                },
-                valueRange = 0f..1f,
-                modifier = Modifier.weight(1f)
-            )
+        Row(verticalAlignment = Alignment.CenterVertically)
+        {
+            if (currentPreset != null)
+            {
+                Text(
+                    text = "Current Preset: ${currentPreset.name} (${settings.currentPresetIndex})",
+                    style = MaterialTheme.typography.titleSmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Text(
+                    text = "No preset selected",
+                    style = MaterialTheme.typography.titleSmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
         Row(
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.height(300.dp))
         {
             Column(
-                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.weight(0.25f).padding(end = 8.dp)
             )
             {
@@ -164,9 +178,21 @@ fun DeviceSettings(
                 )
             }
         }
+        TitleRow(title = "Brightness ${settings.brightness.toString().take(4)}")
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Slider(
+                value = settings.brightness,
+                onValueChange = { newValue ->
+                    onSetBrightness(newValue)
+                },
+                valueRange = 0f..1f,
+                modifier = Modifier.weight(1f)
+            )
+        }
         TitleRow(title="Mode")
         Row(
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
         )
         {
             Button(
@@ -178,7 +204,7 @@ fun DeviceSettings(
             ) {
                 Text(text = "Spectrum")
             }
-            Button(
+            /*Button(
                 onClick = {
                     onSetDisplayMode(DisplayMode.Oscilloscope)
                 },
@@ -186,7 +212,7 @@ fun DeviceSettings(
                 modifier = Modifier.weight(0.33f)
             ) {
                 Text(text = "Wave")
-            }
+            }*/
             Button(
                 onClick = {
                     onSetDisplayMode(DisplayMode.ColorGradient)
@@ -200,7 +226,8 @@ fun DeviceSettings(
         }
         TitleRow(title="Animation")
         Row(
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
         )
         {
             Button(
@@ -223,7 +250,8 @@ fun DeviceSettings(
             }
         }
         Row(
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
         )
         {
             Button(
@@ -246,10 +274,11 @@ fun DeviceSettings(
             }
         }
         Row(
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
         )
         {
-            Button(
+            /*Button(
                 onClick = {
                     onSetAnimationMode(AnimationMode.PointsMiddle)
                 },
@@ -257,7 +286,7 @@ fun DeviceSettings(
                 modifier = Modifier.weight(0.5f)
             ) {
                 Text(text = "Points Middle")
-            }
+            }*/
             Button(
                 onClick = {
                     onSetAnimationMode(AnimationMode.Points)
@@ -269,7 +298,7 @@ fun DeviceSettings(
             }
         }
         TitleRow(title = "Gain ${settings.gain.toString().take(4)}")
-        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Slider(
                 value = settings.gain,
                 onValueChange = { newValue ->
@@ -280,7 +309,7 @@ fun DeviceSettings(
             )
         }
         TitleRow(title = "Smooth Size ${settings.smoothSize}")
-        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Slider(
                 value = settings.smoothSize.toFloat(),
                 onValueChange = { newValue ->
@@ -291,7 +320,7 @@ fun DeviceSettings(
             )
         }
         TitleRow(title = "Skew ${settings.skew.toString().take(4)}")
-        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Slider(
                 value = settings.skew.toFloat(),
                 onValueChange = { newValue ->
@@ -302,7 +331,7 @@ fun DeviceSettings(
             )
         }
         TitleRow(title = "FPS ${settings.fps}")
-        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Slider(
                 value = settings.fps.toFloat(),
                 onValueChange = { newValue ->
@@ -314,8 +343,8 @@ fun DeviceSettings(
             )
         }
         Row(
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         )
         {
             Text(
@@ -324,7 +353,10 @@ fun DeviceSettings(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.weight(1f))
         }
-        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
+        ) {
             Button(
                 onClick = {
                     onSetFftSize(1024)
@@ -364,8 +396,8 @@ fun DeviceSettings(
 
         }
         Row(
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         )
         {
             Text(
@@ -374,66 +406,40 @@ fun DeviceSettings(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.weight(1f))
         }
-        Row(
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-            modifier = Modifier.height(80.dp)) {
-            for (i in 0 until settings.frequencies.size/2) {
-                Column(
-                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(1.0f / settings.frequencies.size.toFloat()).height(120.dp)
-                ) {
-                    Text(
-                        text = "${settings.frequencies[i].toInt()}",
-                        style = MaterialTheme.typography.labelSmall,
-                        lineHeight = 10.sp,
-                    )
+        for (y in 0 until 12) {
 
-                    Slider(
-                        value = settings.gains[i],
-                        onValueChange = { newValue ->
-                            onSetFrequencyGain(i, newValue)
-                        },
-                        modifier = Modifier.padding(top = 16.dp).height(2.dp).width(200.dp).rotate(-90f),
-                        valueRange = 0.5f..5.0f,
-                    )
-                    Text(
-                        text = "${settings.gains[i].toString().take(4)}",
-                        style = MaterialTheme.typography.labelSmall,
-                        lineHeight = 10.sp,
-                        modifier = Modifier.padding(top = 18.dp) // Padding for gain label
-                    )
-                }
-            }
-        }
 
-        Row(
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-            modifier = Modifier.height(120.dp)) {
-            for (i in settings.frequencies.size/2 until settings.frequencies.size) {
-                Column(
-                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(1.0f / settings.frequencies.size.toFloat()).height(120.dp)
-                ) {
-                    Text(
-                        text = "${settings.frequencies[i].toInt()}",
-                        style = MaterialTheme.typography.labelSmall,
-                        lineHeight = 10.sp,
-                    )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceAround,
+                modifier = Modifier.height(70.dp)
+            ) {
+                for (i in (y*2) until (settings.frequencies.size.coerceAtMost((y+1)*2))) {
+                    Column(
+                        horizontalAlignment =Alignment.CenterHorizontally,
+                        modifier = Modifier.weight(1.0f / settings.frequencies.size.toFloat())
+                            .height(120.dp).padding(horizontal = 3.dp)
+                    ) {
+                        Text(
+                            text = "${settings.frequencies[i].toInt()} Hz",
+                            style = MaterialTheme.typography.labelSmall
+                        )
 
-                    Slider(
-                        value = settings.gains[i],
-                        onValueChange = { newValue ->
-                            onSetFrequencyGain(i, newValue)
-                        },
-                        modifier = Modifier.padding(top = 16.dp).height(2.dp).width(200.dp).rotate(-90f),
-                        valueRange = 0.5f..5.0f,
-                    )
-                    Text(
-                        text = "${settings.gains[i].toString().take(4)}",
-                        style = MaterialTheme.typography.labelSmall,
-                        lineHeight = 10.sp,
-                        modifier = Modifier.padding(top = 16.dp) // Padding for gain label
-                    )
+                        Slider(
+                            value = settings.gains[i],
+                            onValueChange = { newValue ->
+                                onSetFrequencyGain(i, newValue)
+                            },
+                            valueRange = 0.5f..4.0f,
+                            modifier = Modifier.height(20.dp).padding(top = 6.dp),
+                        )
+                        Text(
+                            text = settings.gains[i].toString().take(4),
+                            style = MaterialTheme.typography.labelSmall,
+                            lineHeight = 10.sp,
+                            modifier = Modifier.padding(top = 8.dp) // Padding for gain label
+                        )
+                    }
                 }
             }
         }
@@ -511,6 +517,25 @@ fun DeviceSettingsPreview() {
         onRefreshClick = {
             // Handle refresh action
             println("Refresh clicked")
-        }
+        },
+        presets = listOf(
+            Preset(
+                index = 0u,
+                name = "Default Preset",
+                smoothSize = 10u,
+                gain = 1.0f,
+                fps = 60u,
+                color1 = Rgb888.fromStdColor(Color.Blue),
+                color2 = Rgb888.fromStdColor(Color.Green),
+                color3 = Rgb888.fromStdColor(Color.Red),
+                fftSize = 4096u,
+                frequencies = listOf(20f, 200f, 2000f, 20000f),
+                gains = List(22) { 1.0f },
+                skew = 0.5f,
+                brightness = 1.0f,
+                displayMode = DisplayMode.Spectrum,
+                animationMode = AnimationMode.Full
+            )
+        ),
     )
 }

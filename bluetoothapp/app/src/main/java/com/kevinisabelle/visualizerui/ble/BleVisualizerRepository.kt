@@ -29,6 +29,7 @@ import kotlinx.coroutines.withContext
 class BleVisualizerRepository(
     private val context: Context,
 ) {
+    val LOG_TAG = "BleVisualizerRepository"
     private var currentDevice: BleVisualizerDevice? = null
 
     /** One‑shot scan returning after [timeoutMs]. */
@@ -124,7 +125,7 @@ class BleVisualizerRepository(
     }
 
     suspend fun getLedColors() : List<Int> {
-        Log.d("BleVisualizerRepository", "Fetching LED colors from device...")
+        Log.d(LOG_TAG, "Fetching LED colors from device...")
         val result1 = currentDevice?.read(ParameterSpec.LedsBuffer)
         val result2 = currentDevice?.read(ParameterSpec.LedsBuffer2)
 
@@ -143,15 +144,15 @@ class BleVisualizerRepository(
         val ledBufferSize = ParameterSpec.LedsBuffer.SIZE + ParameterSpec.LedsBuffer2.SIZE
         val ledBuffer = result?.take(ledBufferSize) ?: return emptyList()
 
-        // Log.d("BleVisualizerRepository", "LED buffer content (HEX): ${ledBuffer?.joinToString(" ") { String.format("%02X", it) }}")
+        // Log.d(LOG_TAG, "LED buffer content (HEX): ${ledBuffer?.joinToString(" ") { String.format("%02X", it) }}")
 
         if (ledBuffer == null) {
-            Log.e("BleVisualizerRepository", "Failed to fetch LED colors: Device not connected or read failed.")
+            Log.e(LOG_TAG, "Failed to fetch LED colors: Device not connected or read failed.")
             return emptyList()
         }
 
         if (ledBuffer.size % 3 != 0) {
-            Log.e("BleVisualizerRepository", "Error: LED buffer size is not a multiple of 3, size=${result.size}")
+            Log.e(LOG_TAG, "Error: LED buffer size is not a multiple of 3, size=${result.size}")
             return emptyList()
         }
 
@@ -164,19 +165,19 @@ class BleVisualizerRepository(
                 val b = chunk[2].toInt() and 0xFF
                 (0xFF shl 24) or (r shl 16) or (g shl 8) or b // ARGB format
             } else {
-                Log.w("BleVisualizerRepository", "Warning: Incomplete color chunk found, size=${chunk.size}")
+                Log.w(LOG_TAG, "Warning: Incomplete color chunk found, size=${chunk.size}")
                 0 // Default to black if chunk is incomplete
             }
         }
 
-        // Log.d("BleVisualizerRepository", "LED colors fetched: $ledColors")
+        // Log.d(LOG_TAG, "LED colors fetched: $ledColors")
         return ledColors
     }
 
     suspend fun getSettings() : Settings {
         var settings = Settings()
 
-        Log.d("BleVisualizerRepository", "Fetching settings from device...")
+        Log.d(LOG_TAG, "Fetching settings from device...")
         return withContext(Dispatchers.IO) {
             settings = settings.copy(
                 fps = currentDevice?.read(ParameterSpec.Fps)?.toLong() ?: 30,
@@ -255,14 +256,11 @@ class BleVisualizerRepository(
 
     suspend fun getPresetList(): List<PresetEntry>? {
         return try {
-            Log.d("BleVisualizerRepository", "Fetching preset list from device...")
+            Log.d(LOG_TAG, "Fetching preset list from device...")
             var list_bytes: ByteArray = currentDevice?.read(ParameterSpec.PresetList) ?: return null
             var result: List<Preset> = emptyList()
             // if the data is empty, return an empty list
             if (list_bytes.isEmpty()) return emptyList()
-
-            // First byte is the count of presets
-            val count = list_bytes[0].toUByte()
 
             // Remove the first byte (count) from the list
             list_bytes = list_bytes.copyOfRange(1, list_bytes.size)
@@ -279,6 +277,9 @@ class BleVisualizerRepository(
                     null
                 }
             }
+
+            // Order by index
+            presetEntries.sortedBy { it.index.toInt() }
 
             presetEntries
         } catch (e: Exception) {

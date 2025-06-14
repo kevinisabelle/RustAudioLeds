@@ -17,6 +17,7 @@ class BleVisualizerDevice private constructor(
 ) {
     /* ---------- Public API ---------- */
 
+    val LOG_TAG = "BleVisualizerDevice"
     val state: StateFlow<ConnectionState> get() = _state
 
     // Field to signal service discovery completion
@@ -24,12 +25,12 @@ class BleVisualizerDevice private constructor(
 
     @SuppressLint("MissingPermission")
     suspend fun <T : Any> read(spec: ParameterSpec<T>): T? = doGattIo {
-        Log.d("BleVisualizerDevice", "Attempting to read characteristic ${spec.uuid}...")
+        Log.d(LOG_TAG, "Attempting to read characteristic ${spec.uuid}...")
         try {
             val ch = ch(spec)
             gatt.readCharacteristic(ch)
             val result = eventFlow.onEach { event ->
-                println("Received event: $event")
+                Log.d(LOG_TAG,"Received event: $event")
             }.first {
                 it is GattEvent.Result &&
                         it.type == ResultType.Read &&
@@ -42,38 +43,37 @@ class BleVisualizerDevice private constructor(
                 )
             }
             // decode needs to be inside the try block if ch is declared inside
-            Log.d("BleVisualizerDevice", "Read successful for characteristic ${spec.uuid}.")
+            Log.d(LOG_TAG, "Read successful for characteristic ${spec.uuid}.")
             return@doGattIo decode(spec, ch.value ?: error("Characteristic ${spec.uuid} has no value!"))
         }
         catch (e: IllegalStateException) {
             // If the read operation was cancelled or failed, or characteristic not found.
-            Log.e("BleVisualizerDevice", "Error reading characteristic ${spec.uuid}: ${e.message}")
+            Log.e(LOG_TAG, "Error reading characteristic ${spec.uuid}: ${e.message}")
             return@doGattIo null
         }
     }
-
 
     @SuppressLint("MissingPermission")
     suspend fun <T : Any> write(spec: ParameterSpec<T>, value: T) {
         doGattIo {
             try {
-                Log.d("BleVisualizerDevice", "Attempting to write to characteristic ${spec.uuid} with value: $value (no response)...")
+                Log.d(LOG_TAG, "Attempting to write to characteristic ${spec.uuid} with value: $value (no response)...")
             val ch = ch(spec)
             ch.value = encode(spec, value)
             ch.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
 
             if (!gatt.writeCharacteristic(ch)) {
                 // This means the write operation could not even be initiated.
-                Log.e("BleVisualizerDevice", "Failed to initiate write operation for characteristic ${spec.uuid}")
+                Log.e(LOG_TAG, "Failed to initiate write operation for characteristic ${spec.uuid}")
                     return@doGattIo
             }
 
             // For WRITE_TYPE_NO_RESPONSE, the onCharacteristicWrite callback is not triggered.
             // If gatt.writeCharacteristic(ch) returns true, the operation was successfully initiated.
             // There will be no further confirmation from the BLE stack for this type of write.
-            Log.d("BleVisualizerDevice", "Write (no response) to characteristic ${spec.uuid} initiated successfully.")
+            Log.d(LOG_TAG, "Write (no response) to characteristic ${spec.uuid} initiated successfully.")
             } catch (e: Exception) {
-                Log.e("BleVisualizerDevice", "Error writing to characteristic ${spec.uuid}: ${e.message}")
+                Log.e(LOG_TAG, "Error writing to characteristic ${spec.uuid}: ${e.message}")
                 // throw IllegalStateException("Failed to write to characteristic ${spec.uuid}", e)
             }
         }
@@ -94,8 +94,6 @@ class BleVisualizerDevice private constructor(
                 servicesDiscoveredCompleter = CompletableDeferred() // Reset
             }
         }
-        // The parent scope managing this device instance should be cancelled
-        // to ensure the callbackFlow's awaitClose runs if not already handled by gatt.close().
     }
 
     /* ---------- Setup / factory ---------- */
@@ -124,12 +122,6 @@ class BleVisualizerDevice private constructor(
             val status: Int
         ) : GattEvent
     }
-
-    private data class GattResult( // This DTO seems unused, consider removing if not needed elsewhere.
-        val type: ResultType,
-        val uuid: UUID,
-        val status: Int
-    )
 
     private enum class ResultType { Read, Write }
 
@@ -186,13 +178,13 @@ class BleVisualizerDevice private constructor(
                     }
                 }
             }
-            // Add onMtuChanged callback
+
             override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
                 super.onMtuChanged(gatt, mtu, status)
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    Log.d("BleVisualizerDevice", "MTU successfully changed to: $mtu. Max data per packet for read: ${mtu - 1}")
+                    Log.d(LOG_TAG, "MTU successfully changed to: $mtu. Max data per packet for read: ${mtu - 1}")
                 } else {
-                    Log.e("BleVisualizerDevice", "MTU change request failed. Status: $status. Current MTU likely remains default or previous.")
+                    Log.e(LOG_TAG, "MTU change request failed. Status: $status. Current MTU likely remains default or previous.")
                 }
             }
 
@@ -202,11 +194,7 @@ class BleVisualizerDevice private constructor(
                                               status: Int) {
                 // Log the size of the data received by the callback
                 val data = characteristic.value
-                Log.d("BleVisualizerDevice","onCharacteristicRead: UUID=${characteristic.uuid}, Status=$status, Received Size=${data?.size ?: 0}")
-                if (data != null && data.size == 512) {
-                    // Replace "YOUR_LEDS_BUFFER_CHAR_UUID_STRING" with the actual UUID string of your leds_buffer
-                    println("onCharacteristicRead: WARNING - Received exactly 512 bytes for leds_buffer. Full data might be truncated by peripheral.")
-                }
+                Log.d(LOG_TAG,"onCharacteristicRead: UUID=${characteristic.uuid}, Status=$status, Received Size=${data?.size ?: 0}")
                 trySend(GattEvent.Result(ResultType.Read, characteristic.uuid, status))
             }
         }
@@ -239,21 +227,11 @@ class BleVisualizerDevice private constructor(
                 throw IllegalStateException("Services ready, but device not in Connected state. Current state: ${state.value}")
             }
 
-            // Print IO Mutex state for debugging
-            // println("Acquiring IO mutex for I/O operation... Current state is locked: ${ioMutex.isLocked}")
-
-            //ioMutex.withLock {
-                // Re-check connection state inside the mutex critical section.
-            /*if (state.value !is ConnectionState.Connected) {
-                throw IllegalStateException("Device disconnected while awaiting I/O operation. Current state: ${state.value}")
-            }*/
             block(IoContext())
-            //}
         }
 
     private inner class IoContext {
         fun ch(spec: ParameterSpec<*>): BluetoothGattCharacteristic {
-            // First try the expected service UUID
             val characteristic = gatt.getService(SERVICE_UUID)?.getCharacteristic(spec.uuid)
 
             if (characteristic != null) {
@@ -263,20 +241,21 @@ class BleVisualizerDevice private constructor(
             // If not found, search all services
             for (service in gatt.services) {
                 service.getCharacteristic(spec.uuid)?.let {
-                    println("Found characteristic ${spec.uuid} in unexpected service: ${service.uuid}")
+                    Log.v(LOG_TAG, "Found characteristic ${spec.uuid} in unexpected service: ${service.uuid}")
                     return it
                 }
             }
 
             // Log all available characteristics to help debugging
-            println("Characteristic ${spec.uuid} not found. Available characteristics:")
+            Log.v(LOG_TAG, "Characteristic ${spec.uuid} not found. Available characteristics:")
             gatt.services.forEach { service ->
-                println("Service: ${service.uuid}")
+                Log.v(LOG_TAG, "Service: ${service.uuid}")
                 service.characteristics.forEach { char ->
-                    println("  - ${char.uuid}")
+                    Log.v(LOG_TAG, "  - ${char.uuid}")
                 }
             }
 
+            Log.e(LOG_TAG, "Characteristic ${spec.uuid} not found in any service!")
             error("Characteristic ${spec.uuid} not found!")
         }
     }

@@ -30,7 +30,7 @@ fun ColorPicker(
         Row(
             modifier = Modifier
                 .width(100.dp)
-                .height(20.dp)
+                .height(40.dp)
                 .background(selectedColor.value.toStdColor())
         ) {
 0            // This row will show the selected color as a swatch

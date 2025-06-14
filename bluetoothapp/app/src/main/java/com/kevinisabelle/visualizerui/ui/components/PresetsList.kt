@@ -22,6 +22,7 @@ import com.kevinisabelle.visualizerui.data.Preset
 @Composable
 fun PresetsList(
     presets: List<Preset>,
+    currentPresetIndex: Int? = null,
     onPresetSelected: (Preset) -> Unit,
     onPresetDeleted: (Preset) -> Unit = {},
     onRefreshClick: () -> Unit = {}
@@ -59,7 +60,8 @@ fun PresetsList(
                 preset = preset,
                 onActivateClick = { onPresetSelected(preset) },
                 onDeleteClick = { onPresetDeleted(preset) },
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                currentPresetIndex = currentPresetIndex?.toUByte() ?: 255u
             )
         }
     }

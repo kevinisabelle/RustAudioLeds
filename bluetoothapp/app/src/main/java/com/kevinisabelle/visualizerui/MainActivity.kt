@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -114,9 +115,9 @@ object Routes {
 @Composable
 fun VisualizerTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = lightColorScheme(
+        colorScheme = darkColorScheme(
             primary = Color(0xFF0066FF),
-            onPrimary = Color.White
+            onPrimary = Color.Black
         ),
         content = content
     )

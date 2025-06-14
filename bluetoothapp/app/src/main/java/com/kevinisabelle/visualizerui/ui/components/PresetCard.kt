@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -19,9 +20,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import com.kevinisabelle.visualizerui.data.AnimationMode
 import com.kevinisabelle.visualizerui.data.DisplayMode
 import com.kevinisabelle.visualizerui.data.Preset
@@ -30,6 +34,7 @@ import com.kevinisabelle.visualizerui.data.Rgb888
 @Composable
 fun PresetCard(
     preset: Preset?,
+    currentPresetIndex: UByte,
     onActivateClick: () -> Unit,
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -48,29 +53,39 @@ fun PresetCard(
             }
 
             Row(
-                modifier = Modifier.padding(horizontal = 6.dp).fillMaxWidth(),
+                modifier = Modifier.padding(horizontal = 12.dp).fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceAround
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text(text = "${preset.index} - ${preset.name}", style = MaterialTheme.typography.titleMedium)
-
-                IconButton(
-                    onClick = onDeleteClick,
-                    colors = IconButtonColors(MaterialTheme.colorScheme.error, Color.Black, Color.Transparent, Color.Transparent),
-                ) {
+                if (preset.index == currentPresetIndex) {
                     Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete Preset",
+                        imageVector = Icons.Default.Star,
+                        contentDescription = "Default Preset",
+                        tint = Color.Yellow
                     )
                 }
-                IconButton(
-                    onClick = onActivateClick,
-                    colors = IconButtonColors(MaterialTheme.colorScheme.primary, Color.Black, Color.Transparent, Color.Transparent),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayCircle,
-                        contentDescription = "Activate Preset",
-                    )
+                Text(text = "${preset.index} - ${preset.name}", style = MaterialTheme.typography.titleMedium)
+
+                Row()
+                {
+
+                    IconButton(
+                        onClick = onDeleteClick
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete Preset",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    IconButton(
+                        onClick = onActivateClick,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PlayCircle,
+                            contentDescription = "Activate Preset",
+                        )
+                    }
                 }
             }
             Row(
@@ -79,24 +94,23 @@ fun PresetCard(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 // Display colors
-                Text(text = "Color 1: \n${preset.color1.toHex()}", color = preset.color1.toStdColor(), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-                Text(text = "Color 2: \n${preset.color2.toHex()}", color = preset.color2.toStdColor(), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-                Text(text = "Color 3: \n${preset.color3.toHex()}", color = preset.color3.toStdColor(), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+                Text(text = preset.color1.toHex(), color = preset.color1.toStdColor(), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
+                Text(text = preset.color2.toHex(), color = preset.color2.toStdColor(), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
+                Text(text = preset.color3.toHex(), color = preset.color3.toStdColor(), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
 
             }
             Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp).fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                Text(text = "Smooth: \n${preset.smoothSize}", textAlign = TextAlign.Center)
-                Text(text = "Gain: \n${preset.gain}", textAlign = TextAlign.Center)
-                Text(text = "Animation: \n${preset.animationMode}", textAlign = TextAlign.Center)
-                Text(text = "Display: \n${preset.displayMode}", textAlign = TextAlign.Center)
-                Text(text = "FFT: \n${preset.fftSize}", textAlign = TextAlign.Center)
-                Text(text = "Skew: \n${preset.skew}", textAlign = TextAlign.Center)
+                Text(text = "Smooth\n${preset.smoothSize}", textAlign = TextAlign.Center)
+                Text(text = "Gain\n${preset.gain}", textAlign = TextAlign.Center)
+                Text(text = "${preset.displayMode} \n${preset.animationMode}", textAlign = TextAlign.Center)
+                Text(text = "FFT : ${preset.fftSize}\nSkew : ${preset.skew}", textAlign = TextAlign.Center)
+                Text(text = "", textAlign = TextAlign.Center)
             }
-            Row(
+            /*Row(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp).fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceAround
@@ -118,17 +132,10 @@ fun PresetCard(
                         modifier = Modifier.weight(1f)
                     )
                 }
-            }
-            Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp).fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceAround
-            ) {
-
-                Text(text = "Gains (${preset.gains.size}):", style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-            }
-            Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
+            }*/
+            // TitleRow(title = "Gains (${preset.frequencies.size}):")
+            /*Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp).fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
@@ -138,10 +145,11 @@ fun PresetCard(
                         text = chunk.joinToString("\n") { it.toString() },
                         style = MaterialTheme.typography.labelSmall,
                         textAlign = TextAlign.Center,
+                        lineHeight = 1.0.em,
                         modifier = Modifier.weight(1f)
                     )
                 }
-            }
+            }*/
 
         }
 
@@ -169,7 +177,8 @@ fun PresetCardPreview() {
             animationMode = AnimationMode.Full),
         onActivateClick = { /* Activate action */ },
         onDeleteClick = { /* Delete action */ },
-        modifier = Modifier.padding(16.dp)
+        modifier = Modifier.padding(16.dp),
+        currentPresetIndex = 1u
     )
 }
 
@@ -180,6 +189,7 @@ fun PresetCardPreviewEmpty() {
         preset = null,
         onActivateClick = { /* Activate action */ },
         onDeleteClick = { /* Delete action */ },
-        modifier = Modifier.padding(16.dp)
+        modifier = Modifier.padding(16.dp),
+        currentPresetIndex = 1u
     )
 }

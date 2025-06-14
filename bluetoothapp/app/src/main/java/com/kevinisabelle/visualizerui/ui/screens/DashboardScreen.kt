@@ -1,5 +1,6 @@
 ﻿package com.kevinisabelle.visualizerui.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -73,7 +74,7 @@ fun DashboardScreen(
             NavigationBar(
                // Center the content
 
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp).fillMaxWidth()
+                modifier = Modifier.fillMaxWidth()
             )
             {
                 Row(
@@ -231,6 +232,7 @@ fun DashboardScreen(
 
                     DeviceSettings(
                         settings = ui.settings ?: Settings(),
+                        presets = ui.presets,
                         onSetGain = { gain ->
                             viewModel.setGain(gain)
                         },
@@ -275,12 +277,34 @@ fun DashboardScreen(
                 }
 
                 "Presets" -> {
+
+                    if (ui.loading) {
+
+                        Column(
+                            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.connecting))
+                            val progress by animateLottieCompositionAsState(composition, iterations = LottieConstants.IterateForever)
+
+                            LottieAnimation(
+                                composition = composition,
+                                progress = { progress },
+                                modifier = Modifier.size(160.dp)
+                            )
+                        }
+                        return@Column
+                    }
+
                     PresetsList(
                         presets = ui.presets,
+                        currentPresetIndex = ui.settings?.currentPresetIndex ?: 255,
                         onRefreshClick = { viewModel.refreshPresets() },
                         onPresetSelected = { preset ->
                             viewModel.activatePreset(preset.index.toInt())
-                            viewModel.gotoPanel("Visualizer")
+                            viewModel.refreshSettings()
                         },
                         onPresetDeleted = {
                             viewModel.deletePreset(it.index.toInt())
@@ -301,6 +325,7 @@ class DashboardViewModel @Inject constructor(
     private val repo: BleVisualizerRepository,
 ) : ViewModel() {
 
+    val LOG_TAG = "DashboardViewModel"
     data class Ui(
         val ledColors: List<Color> = emptyList(),
         val settings: Settings? = null,
@@ -323,40 +348,48 @@ class DashboardViewModel @Inject constructor(
     private fun refreshLedColors() = viewModelScope.launch {
         val rgbList = repo.getLedColors()
         _ui.update { it.copy(ledColors = rgbList.map { rgb -> Color(rgb or 0xFF000000.toInt()) }) }
-        // println("LED colors updated: ${_ui.value.ledColors.size} LEDs")
     }
 
     fun refreshPresets() = viewModelScope.launch {
-        val presetEntiesList : List<PresetEntry>? = repo.getPresetList()
+        _ui.update { it.copy(loading = true, presets = emptyList()) } // Set loading state while fetching presets
+        val presetsListObjects: List<Preset> = kotlinx.coroutines.withTimeoutOrNull(5000L) { // 5 second timeout
+            val presetEntriesList : List<PresetEntry>? = repo.getPresetList()
         // If no presets are available, return early
-        if (presetEntiesList.isNullOrEmpty()) {
-            _ui.update { it.copy(presets = emptyList()) }
-            return@launch
+            if (presetEntriesList.isNullOrEmpty()) {
+                return@withTimeoutOrNull emptyList<Preset>()
         }
 
-        println("Refreshing presets, found ${presetEntiesList.size} entries")
+            Log.d(LOG_TAG, "Refreshing presets, found ${presetEntriesList.size} entries")
 
-        var presetsListObjects: List<Preset> = emptyList()
-        for (preset in presetEntiesList) {
+            var fetchedPresets: List<Preset> = emptyList()
+            for (presetEntry in presetEntriesList) {
             // Ensure each preset is compatible with the current settings
-            println("Reading preset with index: ${preset.index}")
-            val presetObj = repo.readPreset(preset.index.toInt())
-            println("Preset object: $presetObj")
+                Log.d(LOG_TAG, "Reading preset with index: ${presetEntry.index}")
+                val presetObj = repo.readPreset(presetEntry.index.toInt())
+            Log.d(LOG_TAG, "Preset object: $presetObj")
 
             if (presetObj == null) {
-                println("Preset with index ${preset.index} is null, skipping.")
+                    Log.w(LOG_TAG, "Preset with index ${presetEntry.index} is null, skipping.")
                 continue
             }
 
-            presetsListObjects = presetsListObjects + presetObj
+                fetchedPresets = fetchedPresets + presetObj
         }
-        _ui.update { it.copy(presets = presetsListObjects) }
+        // Sort presets by index to maintain order
+            fetchedPresets.sortedBy { it.index.toInt() }
+        } ?: emptyList() // If timeout occurs, return an empty list
+
+        if (presetsListObjects.isEmpty() && repo.getPresetList()?.isNotEmpty() == true) {
+            Log.w(LOG_TAG, "Timeout occurred while fetching presets or all presets were null.")
+            // Optionally, you can update UI to show an error or a specific message
+        }
+        _ui.update { it.copy(presets = presetsListObjects, loading = false) }
     }
 
     fun savePreset(name: String) = viewModelScope.launch {
-        println("Saving preset with name: $name")
+        Log.d(LOG_TAG, "Saving preset with name: $name")
         var current_preset_index = _ui.value.settings?.currentPresetIndex
-        println("Current preset index: $current_preset_index")
+        Log.d(LOG_TAG, "Current preset index: $current_preset_index")
 
         var preset = Preset.fromSettings(_ui.value.settings)
         preset.name = name.take(Preset.NAME_MAX_LENGTH) // Ensure name is within max length
@@ -371,7 +404,7 @@ class DashboardViewModel @Inject constructor(
             current_preset_index = availableIndex ?: 0 // If no available index, default to 0
         }
 
-        println("Using preset index: $current_preset_index")
+        Log.d(LOG_TAG, "Using preset index: $current_preset_index")
 
         preset.index = current_preset_index.toUByte() // Set the index of the preset
 
@@ -400,7 +433,7 @@ class DashboardViewModel @Inject constructor(
                 "Visualizer" -> refreshLedColors()
             }
 
-            _ui.update { it.copy(currentPanel = panel) }
+            _ui.update { it.copy(currentPanel = panel, previewAnimation = false) }
         }
     }
 
