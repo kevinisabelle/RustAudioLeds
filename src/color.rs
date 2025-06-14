@@ -19,8 +19,20 @@ impl Color {
         }
     }
 
+    pub const fn from_grb_slice(slice: &[u8; 3]) -> Self {
+        Color {
+            g: slice[0],
+            r: slice[1],
+            b: slice[2],
+        }
+    }
+
     pub fn to_slice(&self) -> [u8; 3] {
         [self.g.min(254), self.r.min(254), self.b.min(254)]
+    }
+
+    pub fn to_rgb_slice(&self) -> [u8; 3] {
+        [self.r.min(254), self.g.min(254), self.b.min(254)]
     }
 
     pub fn brightness(&self, factor: f32) -> Color {

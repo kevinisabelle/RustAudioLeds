@@ -72,4 +72,8 @@ sealed interface ParameterSpec<T : Any> {
     object PresetReadActivatedIndex: ParameterSpec<UByte> {
         override val uuid = visualizerUuid(0x0017)
     }
+
+    object SettingsAsPreset: ParameterSpec<ByteArray> {
+        override val uuid = visualizerUuid(0x0018)
+    }
 }

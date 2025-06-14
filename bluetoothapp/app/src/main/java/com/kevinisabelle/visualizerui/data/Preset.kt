@@ -49,6 +49,25 @@ data class Preset(
 
         const val NAME_MAX_LENGTH = 16
     }
+
+    fun toSettings(): Settings {
+        return Settings(
+            currentPresetIndex = index.toInt(),
+            smoothSize = smoothSize.toInt(),
+            gain = gain,
+            fps = fps.toLong(),
+            color1 = color1,
+            color2 = color2,
+            color3 = color3,
+            fftSize = fftSize.toUShort(),
+            frequencies = frequencies,
+            gains = gains,
+            skew = skew,
+            brightness = brightness,
+            displayMode = displayMode,
+            animationMode = animationMode
+        )
+    }
 }
 
 data class PresetEntry(

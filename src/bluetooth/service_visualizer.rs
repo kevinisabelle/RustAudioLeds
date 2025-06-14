@@ -30,6 +30,7 @@ use crate::bluetooth::chrc_presets_activate::{get_preset_activate_chrc, PresetAc
 use crate::bluetooth::chrc_presets_delete::{get_preset_delete_chrc, PresetDeleteChrc};
 use crate::bluetooth::chrc_presets_read_activated_index::{get_preset_activated_index_chrc, PresetActivatedIndexChrc};
 use crate::bluetooth::chrc_skew::{get_skew_chrc, SkewChrc};
+use crate::bluetooth::chrc_read_settings_as_preset::{get_settings_as_preset_chrc, SettingsAsPresetChrc};
 use crate::settings::Settings;
 
 // ---------------------------------------------------------------------------
@@ -64,6 +65,7 @@ pub struct VisualizerService {
     pub preset_activate_chrc: Option<Arc<Mutex<PresetActivateChrc>>>,
     pub preset_delete_chrc: Option<Arc<Mutex<PresetDeleteChrc>>>,
     pub preset_activated_index_chrc: Option<Arc<Mutex<PresetActivatedIndexChrc>>>,
+    pub preset_read_settings_as_preset_chrc: Option<Arc<Mutex<SettingsAsPresetChrc>>>,
 }
 
 object_path! {
@@ -100,6 +102,7 @@ object_path! {
                 preset_activate_chrc: None,
                 preset_delete_chrc: None,
                 preset_activated_index_chrc: None,
+                preset_read_settings_as_preset_chrc: None,
             }
         }
 
@@ -137,6 +140,7 @@ object_path! {
             extend_option_prop!(&self.preset_activate_chrc, properties);
             extend_option_prop!(&self.preset_delete_chrc, properties); 
             extend_option_prop!(&self.preset_activated_index_chrc, properties);
+            extend_option_prop!(&self.preset_read_settings_as_preset_chrc, properties);
 
             properties
         }
@@ -440,6 +444,18 @@ pub async fn get_visualizer_service(
         .unwrap()
         .add_characteristic_path(preset_read_activated_index_chrc.lock().unwrap().object_path().clone());
     visualizer_service.lock().unwrap().preset_activated_index_chrc = Some(preset_read_activated_index_chrc.clone());
+
+    // ------ Read current settings as preset characteristic ------
+    let preset_read_settings_as_preset_chrc = get_settings_as_preset_chrc(
+        connection,
+        visualizer_service_path.clone(),
+        settings.clone(),
+    ).await?;
+    visualizer_service
+        .lock()
+        .unwrap()
+        .add_characteristic_path(preset_read_settings_as_preset_chrc.lock().unwrap().object_path().clone());
+    visualizer_service.lock().unwrap().preset_read_settings_as_preset_chrc = Some(preset_read_settings_as_preset_chrc.clone());
     
     // ------ Service registration ------
     let visualizer_service_interface = VisualizerServiceInterface(visualizer_service.clone());

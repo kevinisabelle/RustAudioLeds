@@ -200,6 +200,24 @@ class BleVisualizerRepository(
         }
     }
 
+    suspend fun getSettingsAsPreset() : Settings {
+        var settings = Settings()
+        Log.d(LOG_TAG, "Fetching settings as preset from device...")
+
+        val presetData = currentDevice?.read(ParameterSpec.SettingsAsPreset)
+        // Decode the preset data if it is not null
+        if (presetData != null) {
+            settings = decodePreset(presetData).toSettings()
+        } else {
+            Log.e(LOG_TAG, "Failed to fetch settings as preset: Device not connected or read failed.")
+        }
+
+        settings.currentPresetIndex = currentDevice?.read(ParameterSpec.PresetReadActivatedIndex)?.toInt() ?: 0
+        settings.ledsCount = currentDevice?.read(ParameterSpec.LedCount)?.toInt() ?: 0
+
+        return settings
+    }
+
     suspend fun setFftSize(i: UShort) {
         currentDevice?.write(ParameterSpec.FftSize, i)
     }
@@ -324,5 +342,42 @@ class BleVisualizerRepository(
         } catch (e: Exception) {
             null
         }
+    }
+
+    suspend fun readAllPresets() : List<Preset> {
+        val presetsListObjects: List<Preset> = kotlinx.coroutines.withTimeoutOrNull(5000L) { // 5 second timeout
+            val presetEntriesList : List<PresetEntry>? = getPresetList()
+            // If no presets are available, return early
+            if (presetEntriesList.isNullOrEmpty()) {
+                return@withTimeoutOrNull emptyList<Preset>()
+            }
+
+            Log.d(LOG_TAG, "Refreshing presets, found ${presetEntriesList.size} entries")
+
+            var fetchedPresets: List<Preset> = emptyList()
+            for (presetEntry in presetEntriesList) {
+                // Ensure each preset is compatible with the current settings
+                Log.d(LOG_TAG, "Reading preset with index: ${presetEntry.index}")
+                val presetObj = readPreset(presetEntry.index.toInt())
+                Log.d(LOG_TAG, "Preset object: $presetObj")
+
+                if (presetObj == null) {
+                    Log.w(LOG_TAG, "Preset with index ${presetEntry.index} is null, skipping.")
+                    continue
+                }
+
+                fetchedPresets = fetchedPresets + presetObj
+            }
+            // Sort presets by index to maintain order
+            fetchedPresets.sortedBy { it.index.toInt() }
+        } ?: emptyList() // If timeout occurs, return an empty list
+
+        if (presetsListObjects.isEmpty() && getPresetList()?.isNotEmpty() == true) {
+            Log.w(LOG_TAG, "Timeout occurred while fetching presets or all presets were null.")
+            // Optionally, you can update UI to show an error or a specific message
+            return emptyList()
+        }
+
+        return presetsListObjects
     }
 }

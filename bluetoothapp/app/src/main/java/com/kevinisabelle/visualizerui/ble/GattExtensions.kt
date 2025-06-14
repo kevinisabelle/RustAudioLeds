@@ -68,6 +68,7 @@ fun <T : Any> encode(spec: ParameterSpec<T>, value: T): ByteArray = when (spec) 
     ParameterSpec.PresetActivate   -> byteArrayOf((value as UByte).toByte())
     ParameterSpec.PresetDelete     -> byteArrayOf((value as UByte).toByte())
     ParameterSpec.PresetReadActivatedIndex -> byteArrayOf((value as UByte).toByte())
+    ParameterSpec.SettingsAsPreset -> (value as ByteArray)
 
 }
 
@@ -98,4 +99,5 @@ fun <T : Any> decode(spec: ParameterSpec<T>, bytes: ByteArray): T = when (spec) 
     ParameterSpec.PresetActivate   -> bytes[0].toUByte()  as T
     ParameterSpec.PresetDelete     -> bytes[0].toUByte()  as T
     ParameterSpec.PresetReadActivatedIndex -> bytes[0].toUByte() as T
+    ParameterSpec.SettingsAsPreset -> bytes                as T
 }

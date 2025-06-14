@@ -302,7 +302,7 @@ fun DashboardScreen(
                     PresetsList(
                         presets = ui.presets,
                         currentPresetIndex = ui.settings?.currentPresetIndex ?: 255,
-                        onRefreshClick = { viewModel.refreshPresets() },
+                        onRefreshClick = { viewModel.refreshSettings() },
                         onPresetSelected = { preset ->
                             viewModel.activatePreset(preset.index.toInt())
                             viewModel.refreshSettings()
@@ -351,42 +351,6 @@ class DashboardViewModel @Inject constructor(
         _ui.update { it.copy(ledColors = rgbList.map { rgb -> Color(rgb or 0xFF000000.toInt()) }) }
     }
 
-    fun refreshPresets() = viewModelScope.launch {
-        _ui.update { it.copy(loading = true, presets = emptyList()) } // Set loading state while fetching presets
-        val presetsListObjects: List<Preset> = kotlinx.coroutines.withTimeoutOrNull(5000L) { // 5 second timeout
-            val presetEntriesList : List<PresetEntry>? = repo.getPresetList()
-        // If no presets are available, return early
-            if (presetEntriesList.isNullOrEmpty()) {
-                return@withTimeoutOrNull emptyList<Preset>()
-        }
-
-            Log.d(LOG_TAG, "Refreshing presets, found ${presetEntriesList.size} entries")
-
-            var fetchedPresets: List<Preset> = emptyList()
-            for (presetEntry in presetEntriesList) {
-            // Ensure each preset is compatible with the current settings
-                Log.d(LOG_TAG, "Reading preset with index: ${presetEntry.index}")
-                val presetObj = repo.readPreset(presetEntry.index.toInt())
-            Log.d(LOG_TAG, "Preset object: $presetObj")
-
-            if (presetObj == null) {
-                    Log.w(LOG_TAG, "Preset with index ${presetEntry.index} is null, skipping.")
-                continue
-            }
-
-                fetchedPresets = fetchedPresets + presetObj
-        }
-        // Sort presets by index to maintain order
-            fetchedPresets.sortedBy { it.index.toInt() }
-        } ?: emptyList() // If timeout occurs, return an empty list
-
-        if (presetsListObjects.isEmpty() && repo.getPresetList()?.isNotEmpty() == true) {
-            Log.w(LOG_TAG, "Timeout occurred while fetching presets or all presets were null.")
-            // Optionally, you can update UI to show an error or a specific message
-        }
-        _ui.update { it.copy(presets = presetsListObjects, loading = false) }
-    }
-
     fun savePreset(name: String) = viewModelScope.launch {
         Log.d(LOG_TAG, "Saving preset with name: $name")
         var current_preset_index = _ui.value.settings?.currentPresetIndex
@@ -396,11 +360,8 @@ class DashboardViewModel @Inject constructor(
         preset.name = name.take(Preset.NAME_MAX_LENGTH) // Ensure name is within max length
 
         val existingIds = _ui.value.presets.map { it.index.toInt() } // Get existing preset indices
-        // find first available index (0-23) - return 0 if all are available, curent_preset_index if it is not 255
-        // keep in mind that the list can be empty or have less than 24 presets that could have "holes"
         current_preset_index = existingIds.indexOfFirst { it == current_preset_index }
         if (current_preset_index == -1) {
-            // Order the indices and find the first available index
             val availableIndex = (0..23).firstOrNull { it !in existingIds }
             current_preset_index = availableIndex ?: 0 // If no available index, default to 0
         }
@@ -410,12 +371,12 @@ class DashboardViewModel @Inject constructor(
         preset.index = current_preset_index.toUByte() // Set the index of the preset
 
         repo.savePreset(encodePreset(preset))
-        refreshPresets()
+        refreshSettings()
     }
 
     fun deletePreset(index: Int) = viewModelScope.launch {
         repo.deletePreset(index)
-        refreshPresets()
+        refreshSettings()
     }
 
     fun activatePreset(index: Int) = viewModelScope.launch {
@@ -429,7 +390,7 @@ class DashboardViewModel @Inject constructor(
 
             // Refresh data when switching to specific panels
             when (panel) {
-                "Presets" -> refreshPresets()
+                "Presets" -> refreshSettings()
                 "Settings" -> refreshSettings()
                 "Visualizer" -> refreshLedColors()
             }
@@ -439,9 +400,10 @@ class DashboardViewModel @Inject constructor(
     }
 
     fun refreshSettings() = viewModelScope.launch {
-        _ui.update { it.copy(settings = null, loading = true) } // Reset settings before fetching
-        val settings = repo.getSettings()
-        _ui.update { it.copy(settings = settings, loading = false) }
+        _ui.update { it.copy(settings = null, loading = true, presets = emptyList()) } // Reset settings before fetching
+        val settings = repo.getSettingsAsPreset()
+        val presets = repo.readAllPresets() ?: emptyList()
+        _ui.update { it.copy(settings = settings, loading = false, presets = presets) }
     }
 
     fun setGain(b: Float) = viewModelScope.launch {
@@ -541,8 +503,6 @@ class DashboardViewModel @Inject constructor(
         return _ui.value.previewAnimation
     }
 
-    // Coroutine to handle the animation logic
-    // This could be a long-running task that updates the LED colors periodically
     fun startAnimation() = viewModelScope.launch {
         while (_ui.value.previewAnimation) {
             refreshLedColors().join()
