@@ -7,7 +7,9 @@ mod bluetooth;
 mod bluez;
 mod values;
 mod presets;
+mod tcp;
 
+use std::net::SocketAddr;
 use crate::animations::animate_leds;
 use crate::bluetooth::registration::create_advertisement;
 use crate::bluetooth::visualizer_app::create_and_register_application;
@@ -25,17 +27,17 @@ use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
 use zbus::Connection;
+use crate::tcp::{start_https_server, HttpServerState};
+
+const BEARER_TOKEN: &str = "supersecrettoken"; // In production, use a secure method to manage tokens.
+const BIND_ADDR: &str = "127.0.0.1:3000";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     display_usage();
     println!("Starting LED Strip Visualizer...");
-
-    // --- D-Bus Connection ---
-    let connection = Connection::system().await?;
-    println!("Connection to dbus established!");
-
+    
     // --- Configuration ---
     let settings = get_config();
     let settings_mutex = Arc::new(Mutex::new(settings));
@@ -63,6 +65,51 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
     input_stream.play()?;
 
+    // --- Serial Setup ---
+    let mut port = serialport::new(PORT, BAUD)
+        .timeout(Duration::from_millis(10))
+        .open()?;
+
+    let settings_for_serial = settings_mutex.clone();
+    let states_values_for_serial = state_values_arc_mutex.clone();
+    
+    let http_server_state = HttpServerState::new(
+        BIND_ADDR.parse::<SocketAddr>()?,
+        String::from(BEARER_TOKEN),
+        settings_mutex.clone(),
+    );
+    
+    // Start the HTTPS server
+    thread::spawn(move || { 
+        start_https_server(http_server_state)
+    });
+    
+    // --- Bluetooth Setup ---
+    let settings_mutex_for_bluetooth = settings_mutex.clone();
+    let state_values_for_bluetooth = state_values_arc_mutex.clone();
+    thread::spawn(move || { 
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            if let Err(e) = setup_bluetooth(settings_mutex_for_bluetooth.clone()).await {
+                eprintln!("Bluetooth setup error: {}", e);
+            } else {
+                println!("Bluetooth setup complete.");
+            }
+        });
+    });
+
+    // --- Render Loop ---
+    loop {
+        animate_leds(&states_values_for_serial, &settings_for_serial, port.as_mut());
+    }
+}
+
+async fn setup_bluetooth(settings_mutex: Arc<Mutex<settings::Settings>>) -> Result<(), Box<dyn std::error::Error>> {
+
+    // --- D-Bus Connection ---
+    let connection = Connection::system().await?;
+    println!("Connection to dbus established!");
+
     // --- Bluetooth Agent Setup ---
     let agent = Arc::new(Agent::new(AGENT_PATH.to_string()));
     register_object(&connection, agent).await?;
@@ -77,17 +124,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     register_object(&connection, advert).await?;
     register_advertisement(&connection, ADVERT_PATH.to_string()).await?;
     println!("Advertisement registered!");
-
-    // --- Serial Setup ---
-    let mut port = serialport::new(PORT, BAUD)
-        .timeout(Duration::from_millis(10))
-        .open()?;
-
-    let settings_for_serial = settings_mutex.clone();
-    let states_values_for_serial = state_values_arc_mutex.clone();
-
-    // --- Render Loop ---
-    loop {
-        animate_leds(&states_values_for_serial, &settings_for_serial, port.as_mut());
-    }
+    
+    Ok(())
 }

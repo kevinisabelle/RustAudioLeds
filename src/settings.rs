@@ -1,8 +1,9 @@
-﻿use crate::color::{color_from_string, Color};
+﻿use serde::{Deserialize, Serialize};
+use crate::color::{color_from_string, Color};
 use crate::DEFAULT_SMOOTH_SIZE;
 use crate::constants::{DEFAULT_SKEW, FFT_SIZE, FPS, GAIN, SAMPLE_RATE};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum DisplayMode {
     Spectrum = 0,
     Oscilloscope = 1,
@@ -20,7 +21,7 @@ impl DisplayMode {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum AnimationMode {
     Full = 0,
     FullWithMax = 1,
@@ -44,7 +45,7 @@ impl AnimationMode {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings  {
     pub smooth_size: usize,
     pub gain: f32,
