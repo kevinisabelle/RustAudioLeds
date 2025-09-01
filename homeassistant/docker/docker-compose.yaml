@@ -1,0 +1,19 @@
+# File: `docker/docker-compose.yaml`
+version: "3.9"
+services:
+  homeassistant:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: homeassistant
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+    environment:
+      - TZ=UTC
+    # Named volume: first creation is pre-populated from image (/config)
+    volumes:
+      - ha_config:/config
+volumes:
+  ha_config:
+

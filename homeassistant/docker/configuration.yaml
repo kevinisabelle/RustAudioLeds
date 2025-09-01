@@ -1,0 +1,27 @@
+# Home Assistant base defaults (frontend, api, etc.)
+default_config:
+
+# Time zone (adjust)
+homeassistant:
+  time_zone: UTC
+
+# Logger setup with debug for the custom integration
+logger:
+  default: info
+  logs:
+    custom_components.audioleds: debug
+
+# (Optional) Example customization of the integration if/when it gains YAML options:
+#audioleds:
+#  host: 192.168.1.50
+#  port: 12345
+#  update_interval: 5
+
+# Uncomment to allow template debugging
+#template:
+#  - trigger:
+#      - platform: time_pattern
+#        minutes: "/15"
+#    sensor:
+#      - name: "Example Sensor"
+#        state: "{{ now() }}"

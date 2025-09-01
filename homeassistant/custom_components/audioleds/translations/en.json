@@ -1,0 +1,14 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "AudioLeds",
+        "description": "Enter the connection details for your AudioLeds device."
+      }
+    },
+    "abort": {
+      "already_configured": "This AudioLeds device is already configured."
+    }
+  }
+}
+

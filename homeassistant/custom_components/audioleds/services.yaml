@@ -1,0 +1,43 @@
+send_command:
+  name: Send Command
+  description: Send a partial update to the AudioLeds device (POST /api/v1/command).
+  fields:
+    data:
+      required: true
+      example: '{"brightness":0.8, "fps":60}'
+      selector:
+        object:
+create_preset:
+  name: Create Preset
+  description: Create a new preset on the device (POST /api/v1/presets).
+  fields:
+    data:
+      required: true
+      example: '{"index":0, "name":[84,101,115,116,0,0,0,0,0,0,0,0,0,0,0,0], "brightness":0.9}'
+      selector:
+        object:
+activate_preset:
+  name: Activate Preset
+  description: Activate an existing preset (POST /api/v1/presets/{presetId}/activate).
+  fields:
+    preset_id:
+      required: true
+      example: 0
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+delete_preset:
+  name: Delete Preset
+  description: Delete a preset (DELETE /api/v1/presets/{presetId}).
+  fields:
+    preset_id:
+      required: true
+      example: 0
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+

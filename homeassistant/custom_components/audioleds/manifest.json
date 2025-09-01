@@ -1,0 +1,14 @@
+{
+  "domain": "audioleds",
+  "name": "AudioLeds",
+  "version": "0.0.1",
+  "documentation": "https://github.com/youruser/audioleds-homeassistant",
+  "issue_tracker": "https://github.com/youruser/audioleds-homeassistant/issues",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": ["@youruser"],
+  "config_flow": true,
+  "iot_class": "local_polling",
+  "loggers": ["custom_components.audioleds"],
+  "integration_type": "hub"
+}
