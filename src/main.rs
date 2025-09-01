@@ -30,7 +30,7 @@ use zbus::Connection;
 use crate::tcp::{start_https_server, HttpServerState};
 
 const BEARER_TOKEN: &str = "supersecrettoken"; // In production, use a secure method to manage tokens.
-const BIND_ADDR: &str = "127.0.0.1:3000";
+const BIND_ADDR: &str = "0.0.0.0:3000";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -79,13 +79,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         settings_mutex.clone(),
     );
     
-    // Start the HTTPS server
-    thread::spawn(move || { 
-        start_https_server(http_server_state)
+    // Start the HTTPS server (spawn async task)
+    tokio::spawn(async move {
+        if let Err(e) = start_https_server(http_server_state).await {
+            eprintln!("HTTPS server error: {e}");
+        }
     });
     
     // --- Bluetooth Setup ---
-    let settings_mutex_for_bluetooth = settings_mutex.clone();
+    /*let settings_mutex_for_bluetooth = settings_mutex.clone();
     let state_values_for_bluetooth = state_values_arc_mutex.clone();
     thread::spawn(move || { 
         let rt = tokio::runtime::Runtime::new().unwrap();
@@ -96,7 +98,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Bluetooth setup complete.");
             }
         });
-    });
+    });*/
 
     // --- Render Loop ---
     loop {
