@@ -9,7 +9,6 @@ mod values;
 mod presets;
 mod tcp;
 
-use std::net::SocketAddr;
 use crate::animations::animate_leds;
 use crate::bluetooth::registration::create_advertisement;
 use crate::bluetooth::visualizer_app::create_and_register_application;
@@ -22,12 +21,13 @@ use crate::settings::{display_usage, get_config};
 use crate::values::StateValues;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::StreamConfig;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use std::sync::Mutex;
-use std::thread;
 use std::time::Duration;
 use zbus::Connection;
-use crate::tcp::{start_https_server, HttpServerState};
+use crate::tcp::server::start_https_server;
+use crate::tcp::server_state::HttpServerState;
 
 const BEARER_TOKEN: &str = "supersecrettoken"; // In production, use a secure method to manage tokens.
 const BIND_ADDR: &str = "0.0.0.0:3000";

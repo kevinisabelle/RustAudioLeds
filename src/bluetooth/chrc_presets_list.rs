@@ -33,7 +33,7 @@ fn serialize_preset_list_data() -> Result<Vec<u8>, std::io::Error> {
     for i in 0..(count as usize) {
         let preset_item = &presets_list[i];
         bytes_out.push(preset_item.index); // id
-        bytes_out.extend_from_slice(&preset_item.name); // name[16]
+        bytes_out.extend_from_slice(&preset_item.name.as_bytes()); // name[16]
     }
     Ok(bytes_out)
 }
