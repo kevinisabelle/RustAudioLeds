@@ -17,6 +17,6 @@ SERVICE_SEND_COMMAND = "send_command"
 SERVICE_CREATE_PRESET = "create_preset"
 SERVICE_ACTIVATE_PRESET = "activate_preset"
 SERVICE_DELETE_PRESET = "delete_preset"
+SERVICE_SET_COLORS = "set_colors"
 
 ATTR_PRESET_ID = "preset_id"
-

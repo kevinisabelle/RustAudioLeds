@@ -40,4 +40,22 @@ delete_preset:
           min: 0
           max: 255
           mode: box
-
+set_colors:
+  name: Set Colors
+  description: Update one or more colors (color1 primary RGB, color2 and color3 secondary) via POST /api/v1/command.
+  fields:
+    color1:
+      required: false
+      example: [255,0,0]
+      selector:
+        color:
+    color2:
+      required: false
+      example: [0,255,0]
+      selector:
+        color:
+    color3:
+      required: false
+      example: [0,0,255]
+      selector:
+        color:
