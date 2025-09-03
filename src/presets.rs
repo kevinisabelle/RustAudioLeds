@@ -1,10 +1,11 @@
-﻿use std::io::{Read, Write};
+﻿use serde::{Deserialize, Serialize};
+use std::io::{Read, Write};
 use std::sync::MutexGuard;
 use crate::color::Color;
 use crate::constants::NUM_LEDS;
 use crate::settings::{AnimationMode, DisplayMode, Settings};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Preset {
     pub index: u8, // Index 0
     pub name: [u8; 16], // Index 1-16
@@ -21,6 +22,12 @@ pub struct Preset {
     pub brightness: f32, // Index 168-171
     pub display_mode: DisplayMode, // enum encoded as u8, // Index 172
     pub animation_mode: AnimationMode, // enum encoded as u8, // Index 173
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PresetInfo {
+    pub index: u8,
+    pub name: String,
 }
 
 impl Preset {
@@ -84,6 +91,13 @@ impl Preset {
         settings.animation_mode = self.animation_mode.clone();
         settings.active_preset = self.index as usize;
     }
+
+    pub fn to_info(&self) -> PresetInfo {
+        PresetInfo {
+            index: self.index,
+            name: name_bytes_to_string(&self.name),
+        }
+    }
 }
 
 const PRESET_PATH: &str = "presets";
@@ -110,7 +124,7 @@ pub fn load_preset(index: u8) -> std::io::Result<Preset> {
     Ok(preset)
 }
 
-pub fn list_presets() -> std::io::Result<Vec<Preset>> {
+pub fn list_presets() -> std::io::Result<Vec<PresetInfo>> {
     let mut presets = Vec::new();
     for entry in std::fs::read_dir(PRESET_PATH)? {
         let entry = entry?;
@@ -120,7 +134,7 @@ pub fn list_presets() -> std::io::Result<Vec<Preset>> {
                 .replace(".bin", "");
             if let Ok(index) = preset_index.parse::<u8>() {
                 if let Ok(preset) = load_preset(index) {
-                    presets.push(preset);
+                    presets.push(preset.to_info());
                 }
             }
         }
@@ -167,7 +181,7 @@ fn name_bytes_to_string(name_bytes: &[u8; 16]) -> String {
 }
 
 // Helper for converting String to name byte array
-fn string_to_name_bytes(s: &str) -> [u8; 16] {
+pub fn string_to_name_bytes(s: &str) -> [u8; 16] {
     let mut name_arr = [0u8; 16]; let bytes = s.as_bytes();
     let len = std::cmp::min(bytes.len(), 16); name_arr[..len].copy_from_slice(&bytes[..len]); name_arr
 }
@@ -284,5 +298,3 @@ pub fn decode_preset(data: &[u8]) -> std::io::Result<Preset> {
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, format!("UTF-8 decoding error: {}", e)))?;
     decode_preset_csv(&csv_data).map_err(Into::into)
 }
-
-

@@ -7,7 +7,9 @@ mod bluetooth;
 mod bluez;
 mod values;
 mod presets;
+mod tcp;
 
+use std::env::Args;
 use crate::animations::animate_leds;
 use crate::bluetooth::registration::create_advertisement;
 use crate::bluetooth::visualizer_app::create_and_register_application;
@@ -20,24 +22,26 @@ use crate::settings::{display_usage, get_config};
 use crate::values::StateValues;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::StreamConfig;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
 use zbus::Connection;
+use crate::tcp::server::start_https_server;
+use crate::tcp::server_state::HttpServerState;
+
+const BEARER_TOKEN: &str = "supersecrettoken"; // In production, use a secure method to manage tokens.
+const BIND_ADDR: &str = "0.0.0.0:3000";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     display_usage();
     println!("Starting LED Strip Visualizer...");
-
-    // --- D-Bus Connection ---
-    let connection = Connection::system().await?;
-    println!("Connection to dbus established!");
-
+    
     // --- Configuration ---
-    let settings = get_config();
+    let (settings, useHttp, useBluetooth) = get_config();
     let settings_mutex = Arc::new(Mutex::new(settings));
     let state_values = StateValues::new(settings_mutex.clone());
     let state_values_arc_mutex = Arc::new(Mutex::new(state_values));
@@ -63,6 +67,60 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
     input_stream.play()?;
 
+    // --- Serial Setup ---
+    let mut port = serialport::new(PORT, BAUD)
+        .timeout(Duration::from_millis(10))
+        .open()?;
+
+    let settings_for_serial = settings_mutex.clone();
+    let states_values_for_serial = state_values_arc_mutex.clone();
+    
+    let http_server_state = HttpServerState::new(
+        BIND_ADDR.parse::<SocketAddr>()?,
+        String::from(BEARER_TOKEN),
+        settings_mutex.clone(),
+    );
+
+
+    if useHttp {
+        // Start the HTTPS server (spawn async task)
+        println!("HTTP server enabled.");
+        tokio::spawn(async move {
+            if let Err(e) = start_https_server(http_server_state).await {
+                eprintln!("HTTPS server error: {e}");
+            }
+        });
+    }
+
+    if useBluetooth {
+        // --- Bluetooth Setup ---
+        println!("Bluetooth enabled.");
+        let settings_mutex_for_bluetooth = settings_mutex.clone();
+        thread::spawn(move || {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async {
+                if let Err(e) = setup_bluetooth(settings_mutex_for_bluetooth.clone()).await {
+                    eprintln!("Bluetooth setup error: {}", e);
+                } else {
+                    println!("Bluetooth setup complete.");
+                }
+            });
+        });
+    }
+
+
+    // --- Render Loop ---
+    loop {
+        animate_leds(&states_values_for_serial, &settings_for_serial, port.as_mut());
+    }
+}
+
+async fn setup_bluetooth(settings_mutex: Arc<Mutex<settings::Settings>>) -> Result<(), Box<dyn std::error::Error>> {
+
+    // --- D-Bus Connection ---
+    let connection = Connection::system().await?;
+    println!("Connection to dbus established!");
+
     // --- Bluetooth Agent Setup ---
     let agent = Arc::new(Agent::new(AGENT_PATH.to_string()));
     register_object(&connection, agent).await?;
@@ -77,17 +135,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     register_object(&connection, advert).await?;
     register_advertisement(&connection, ADVERT_PATH.to_string()).await?;
     println!("Advertisement registered!");
-
-    // --- Serial Setup ---
-    let mut port = serialport::new(PORT, BAUD)
-        .timeout(Duration::from_millis(10))
-        .open()?;
-
-    let settings_for_serial = settings_mutex.clone();
-    let states_values_for_serial = state_values_arc_mutex.clone();
-
-    // --- Render Loop ---
-    loop {
-        animate_leds(&states_values_for_serial, &settings_for_serial, port.as_mut());
-    }
+    
+    Ok(())
 }

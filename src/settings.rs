@@ -1,8 +1,9 @@
-﻿use crate::color::{color_from_string, Color};
+﻿use serde::{Deserialize, Serialize};
+use crate::color::{color_from_string, Color};
 use crate::DEFAULT_SMOOTH_SIZE;
 use crate::constants::{DEFAULT_SKEW, FFT_SIZE, FPS, GAIN, SAMPLE_RATE};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum DisplayMode {
     Spectrum = 0,
     Oscilloscope = 1,
@@ -20,7 +21,7 @@ impl DisplayMode {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum AnimationMode {
     Full = 0,
     FullWithMax = 1,
@@ -44,7 +45,7 @@ impl AnimationMode {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings  {
     pub smooth_size: usize,
     pub gain: f32,
@@ -73,7 +74,7 @@ impl Settings
     }
 }
 
-pub fn get_config() -> Settings {
+pub fn get_config() -> (Settings, bool, bool) {
 
     let mut settings = Settings {
         smooth_size: DEFAULT_SMOOTH_SIZE,
@@ -100,10 +101,18 @@ pub fn get_config() -> Settings {
     };
 
     settings.set_fft_size(FFT_SIZE);
+    let mut use_http = true;
+    let mut use_bluetooth = false;
 
     let mut args = std::env::args();
     while let Some(arg) = args.next() {
         match arg.as_str() {
+            "--bluetooth" | "-bt" => {
+                use_bluetooth = true;
+            }
+            "--httpserver" | "-http" => {
+                use_http = true;
+            }
             "--smooth" | "-s" => {
                 if let Some(val) = args.next() {
                     settings.smooth_size = val.parse().unwrap_or(DEFAULT_SMOOTH_SIZE);
@@ -177,12 +186,14 @@ pub fn get_config() -> Settings {
         }
     }
 
-    settings
+    (settings, use_http, use_bluetooth)
 }
 
 pub fn display_usage() {
     println!("Usage: audio_visualizer [OPTIONS]");
     println!("Options:");
+    println!("  -bt, --bluetooth             Enable Bluetooth (default: false)");
+    println!("  -http, --httpserver          Enable HTTP server (default: true)");
     println!("  -s, --smooth <size>          Set the smooth size (default: {})", DEFAULT_SMOOTH_SIZE);
     println!("  -g, --gain <value>           Set the gain (default: {})", GAIN);
     println!("  -f, --fps <value>            Set the frames per second (default: {})", FPS);

@@ -1,0 +1,12 @@
+{
+  "domain": "audioleds",
+  "name": "AudioLEDs",
+  "config_flow": true,
+  "documentation": "https://github.com/your_github/your_repo",
+  "issue_tracker": "https://github.com/your_github/your_repo/issues",
+  "codeowners": ["@your_github_handle"],
+  "requirements": [],
+  "version": "0.1.0",
+  "iot_class": "locWal_polling"
+}
+

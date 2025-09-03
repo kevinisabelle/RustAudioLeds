@@ -1,5 +1,7 @@
 ﻿use std::fmt::{Debug, Formatter};
+use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize)]
 pub struct Color {
     pub r: u8,
     pub g: u8,
