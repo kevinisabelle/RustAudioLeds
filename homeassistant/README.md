@@ -93,15 +93,15 @@ For the "Save Preset" functionality, you need to create two helper entities.
 type: entities
 title: AudioLEDs Control
 entities:
-  # Replace 'light.audioleds_your_device' with your actual light entity ID
-  - entity: light.audioleds_your_device
+  # Replace 'light.audioleds_rasp5' with your actual light entity ID
+  - entity: light.audioleds_rasp5
   # Replace the following entities with your actual sensor/number/select entity IDs
-  - entity: number.audioleds_your_device_gain
-  - entity: number.audioleds_your_device_smooth_size
-  - entity: number.audioleds_your_device_skew
-  - entity: select.audioleds_your_device_display_mode
-  - entity: select.audioleds_your_device_animation_mode
-  - entity: select.audioleds_your_device_fft_size
+  - entity: number.audioleds_rasp5_gain
+  - entity: number.audioleds_rasp5_smooth_size
+  - entity: number.audioleds_rasp5_skew
+  - entity: select.audioleds_rasp5_display_mode
+  - entity: select.audioleds_rasp5_animation_mode
+  - entity: select.audioleds_rasp5_fft_size
 
 # =================================================================================
 # Preset Management Section
@@ -129,7 +129,7 @@ footer:
         service: audioleds.save_preset
         target:
           # Replace with one of your actual device entities
-          entity_id: light.audioleds_your_device
+          entity_id: light.audioleds_rasp5
         data:
           preset_index: "{{ states('input_number.audioleds_preset_index') | int }}"
           preset_name: "{{ states('input_text.audioleds_preset_name') }}"
@@ -144,18 +144,18 @@ card:
   title: Saved Presets
 filter:
   template: >
-    {% for preset in state_attr('sensor.audioleds_your_device_presets', 'presets') %}
+    {% for preset in state_attr('sensor.audioleds_rasp5_presets', 'presets') %}
       {{
         {
           'type': 'custom:button-card',
-          'entity': 'sensor.audioleds_your_device_presets',
+          'entity': 'sensor.audioleds_rasp5_presets',
           'name': preset.name ~ ' (Slot ' ~ preset.index ~ ')',
           'template': 'list_item',
           'tap_action': {
             'action': 'call-service',
             'service': 'audioleds.activate_preset',
             'target': {
-              'entity_id': 'sensor.audioleds_your_device_presets'
+              'entity_id': 'sensor.audioleds_rasp5_presets'
             },
             'data': { 'preset_index': preset.index }
           },
@@ -163,7 +163,7 @@ filter:
             'action': 'call-service',
             'service': 'audioleds.delete_preset',
             'target': {
-              'entity_id': 'sensor.audioleds_your_device_presets'
+              'entity_id': 'sensor.audioleds_rasp5_presets'
             },
             'data': { 'preset_index': preset.index }
           }
@@ -176,4 +176,3 @@ filter:
     -   Click **SAVE** in the top right of the editor, then click the **X** to exit.
 
 You should now have a fully functional dashboard for your AudioLEDs device!
-

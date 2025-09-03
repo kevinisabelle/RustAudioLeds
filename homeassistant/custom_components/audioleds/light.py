@@ -11,6 +11,7 @@ from homeassistant.components.light import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback, HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -128,7 +129,7 @@ class AudioLedsLight(CoordinatorEntity[AudioLedsDataUpdateCoordinator], LightEnt
             # If no specific attributes are sent, just turn on
             data["brightness"] = 1.0
 
-        session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
+        session = async_get_clientsession(self.coordinator.hass)
         url = f"{self.coordinator.api_url}/command"
         try:
             async with session.post(
@@ -144,7 +145,7 @@ class AudioLedsLight(CoordinatorEntity[AudioLedsDataUpdateCoordinator], LightEnt
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the light off."""
         data = {"brightness": 0}
-        session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
+        session = async_get_clientsession(self.coordinator.hass)
         url = f"{self.coordinator.api_url}/command"
         try:
             async with session.post(
@@ -209,7 +210,7 @@ class AudioLedsColorLight(
         rgb = kwargs[ATTR_RGB_COLOR]
         data = {self._color_key: {"r": rgb[0], "g": rgb[1], "b": rgb[2]}}
 
-        session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
+        session = async_get_clientsession(self.coordinator.hass)
         url = f"{self.coordinator.api_url}/command"
         try:
             async with session.post(

@@ -7,6 +7,7 @@ from typing import Any
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -78,7 +79,7 @@ class AudioLedsDisplayModeSelect(
 
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
-        session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
+        session = async_get_clientsession(self.coordinator.hass)
         url = f"{self.coordinator.api_url}/command"
         try:
             async with session.post(
@@ -130,7 +131,7 @@ class AudioLedsAnimationModeSelect(
 
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
-        session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
+        session = async_get_clientsession(self.coordinator.hass)
         url = f"{self.coordinator.api_url}/command"
         try:
             async with session.post(
@@ -200,7 +201,7 @@ class AudioLedsPresetSelect(
                     break
 
             if preset_id is not None:
-                session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
+                session = async_get_clientsession(self.coordinator.hass)
                 url = f"{self.coordinator.api_url}/presets/{preset_id}/activate"
                 try:
                     async with session.post(url, ssl=self.coordinator.verify_ssl) as response:
@@ -249,7 +250,7 @@ class AudioLedsFftSizeSelect(
 
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
-        session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
+        session = async_get_clientsession(self.coordinator.hass)
         url = f"{self.coordinator.api_url}/command"
         try:
             async with session.post(

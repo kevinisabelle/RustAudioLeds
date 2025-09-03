@@ -7,6 +7,7 @@ from typing import Any
 from homeassistant.components.number import NumberEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -66,7 +67,7 @@ class AudioLedsGainNumber(CoordinatorEntity[AudioLedsDataUpdateCoordinator], Num
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
-        session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
+        session = async_get_clientsession(self.coordinator.hass)
         url = f"{self.coordinator.api_url}/command"
         try:
             async with session.post(
@@ -116,7 +117,7 @@ class AudioLedsSmoothSizeNumber(
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
-        session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
+        session = async_get_clientsession(self.coordinator.hass)
         url = f"{self.coordinator.api_url}/command"
         try:
             async with session.post(
@@ -168,7 +169,7 @@ class AudioLedsSkewNumber(
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
-        session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
+        session = async_get_clientsession(self.coordinator.hass)
         url = f"{self.coordinator.api_url}/command"
         try:
             async with session.post(
