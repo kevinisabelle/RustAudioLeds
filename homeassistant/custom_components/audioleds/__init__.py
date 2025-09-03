@@ -7,7 +7,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform, CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.helpers import config_validation as cv, device_registry as dr
+from homeassistant.helpers import config_validation as cv, device_registry as dr, entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN
@@ -28,20 +28,20 @@ SERVICE_DELETE_PRESET = "delete_preset"
 
 SERVICE_SAVE_PRESET_SCHEMA = vol.Schema(
     {
-        vol.Required("device_id"): cv.string,
+        vol.Required("entity_id"): cv.entity_id,
         vol.Required("preset_index"): vol.All(vol.Coerce(int), vol.Range(min=0, max=19)),
         vol.Required("preset_name"): cv.string,
     }
 )
 SERVICE_ACTIVATE_PRESET_SCHEMA = vol.Schema(
     {
-        vol.Required("device_id"): cv.string,
+        vol.Required("entity_id"): cv.entity_id,
         vol.Required("preset_index"): vol.All(vol.Coerce(int), vol.Range(min=0, max=19)),
     }
 )
 SERVICE_DELETE_PRESET_SCHEMA = vol.Schema(
     {
-        vol.Required("device_id"): cv.string,
+        vol.Required("entity_id"): cv.entity_id,
         vol.Required("preset_index"): vol.All(vol.Coerce(int), vol.Range(min=0, max=19)),
     }
 )
@@ -73,27 +73,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_setup_services(hass: HomeAssistant) -> None:
     """Set up the services for the AudioLEDs integration."""
 
-    async def get_coordinator_from_device_id(device_id: str) -> AudioLedsDataUpdateCoordinator | None:
-        device_registry = dr.async_get(hass)
-        device = device_registry.async_get(device_id)
-        if not device:
-            _LOGGER.error("Device not found: %s", device_id)
+    async def get_coordinator_from_entity_id(
+        entity_id: str,
+    ) -> AudioLedsDataUpdateCoordinator | None:
+        entity_registry = er.async_get(hass)
+        entity = entity_registry.async_get(entity_id)
+        if not entity:
+            _LOGGER.error("Entity not found: %s", entity_id)
             return None
 
-        for entry_id in device.config_entries:
-            if entry_id in hass.data[DOMAIN]:
-                return hass.data[DOMAIN][entry_id]
+        if entity.config_entry_id in hass.data[DOMAIN]:
+            return hass.data[DOMAIN][entity.config_entry_id]
 
-        _LOGGER.error("No coordinator found for device: %s", device_id)
+        _LOGGER.error("No coordinator found for entity: %s", entity_id)
         return None
 
     async def save_preset(call: ServiceCall) -> None:
         """Service to save the current preset."""
-        device_id = call.data["device_id"]
+        entity_id = call.data["entity_id"]
         preset_index = call.data["preset_index"]
         preset_name = call.data["preset_name"]
 
-        coordinator = await get_coordinator_from_device_id(device_id)
+        coordinator = await get_coordinator_from_entity_id(entity_id)
         if not coordinator:
             return
 
@@ -116,10 +117,10 @@ async def async_setup_services(hass: HomeAssistant) -> None:
 
     async def activate_preset(call: ServiceCall) -> None:
         """Service to activate a preset."""
-        device_id = call.data["device_id"]
+        entity_id = call.data["entity_id"]
         preset_index = call.data["preset_index"]
 
-        coordinator = await get_coordinator_from_device_id(device_id)
+        coordinator = await get_coordinator_from_entity_id(entity_id)
         if not coordinator:
             return
 
@@ -140,10 +141,10 @@ async def async_setup_services(hass: HomeAssistant) -> None:
 
     async def delete_preset(call: ServiceCall) -> None:
         """Service to delete a preset."""
-        device_id = call.data["device_id"]
+        entity_id = call.data["entity_id"]
         preset_index = call.data["preset_index"]
 
-        coordinator = await get_coordinator_from_device_id(device_id)
+        coordinator = await get_coordinator_from_entity_id(entity_id)
         if not coordinator:
             return
 
