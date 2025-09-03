@@ -1,14 +1,12 @@
-{
+﻿{
   "domain": "audioleds",
-  "name": "AudioLeds",
-  "version": "0.0.1",
-  "documentation": "https://github.com/youruser/audioleds-homeassistant",
-  "issue_tracker": "https://github.com/youruser/audioleds-homeassistant/issues",
-  "requirements": [],
-  "dependencies": [],
-  "codeowners": ["@youruser"],
+  "name": "AudioLEDs",
   "config_flow": true,
-  "iot_class": "local_polling",
-  "loggers": ["custom_components.audioleds"],
-  "integration_type": "hub"
+  "documentation": "https://github.com/your_github/your_repo",
+  "issue_tracker": "https://github.com/your_github/your_repo/issues",
+  "codeowners": ["@your_github_handle"],
+  "requirements": [],
+  "version": "0.1.0",
+  "iot_class": "local_polling"
 }
+

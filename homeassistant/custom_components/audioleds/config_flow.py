@@ -1,42 +1,57 @@
-from __future__ import annotations
-
+﻿"""Config flow for AudioLEDs integration."""
 import logging
-from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PORT
-from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, CONF_TOKEN, CONF_VERIFY_SSL, DEFAULT_PORT, DEFAULT_VERIFY_SSL
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+DATA_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_HOST): str,
+        vol.Required(CONF_PORT, default=80): int,
+    }
+)
+
 
 class AudioLedsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Handle a config flow for AudioLEDs."""
+
     VERSION = 1
 
-    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
-        errors: dict[str, str] = {}
+    async def async_step_user(self, user_input=None):
+        """Handle the initial step."""
+        errors = {}
         if user_input is not None:
-            host = user_input[CONF_HOST].strip()
-            port = user_input.get(CONF_PORT, DEFAULT_PORT)
-            unique_id = f"{host}:{port}".lower()
-            await self.async_set_unique_id(unique_id)
-            self._abort_if_unique_id_configured()
-            return self.async_create_entry(title=f"AudioLeds {host}", data=user_input)
+            session = async_get_clientsession(self.hass)
+            host = user_input[CONF_HOST]
+            port = user_input[CONF_PORT]
+            url = f"http://{host}:{port}/api/v1/info"
 
-        schema = vol.Schema(
-            {
-                vol.Required(CONF_HOST): str,
-                vol.Optional(CONF_PORT, default=DEFAULT_PORT): int,
-                vol.Required(CONF_TOKEN): str,
-                vol.Optional(CONF_VERIFY_SSL, default=DEFAULT_VERIFY_SSL): bool,
-            }
+            try:
+                async with session.get(url, timeout=10) as response:
+                    if response.status == 200:
+                        await self.async_set_unique_id(host)
+                        self._abort_if_unique_id_configured()
+                        return self.async_create_entry(title=host, data=user_input)
+                    else:
+                        _LOGGER.error(
+                            "Failed to connect to AudioLEDs device at %s: Status %s",
+                            url,
+                            response.status,
+                        )
+                        errors["base"] = "cannot_connect"
+            except Exception as exc:
+                _LOGGER.error(
+                    "Failed to connect to AudioLEDs device at %s: %s", url, exc
+                )
+                errors["base"] = "cannot_connect"
+
+        return self.async_show_form(
+            step_id="user", data_schema=DATA_SCHEMA, errors=errors
         )
-        return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
-
-    async def async_step_import(self, import_config: dict[str, Any]) -> FlowResult:
-        # Support YAML import if added later
-        return await self.async_step_user(import_config)
 
