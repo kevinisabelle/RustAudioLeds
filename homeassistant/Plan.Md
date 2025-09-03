@@ -27,12 +27,13 @@ A primary light entity for the device.
   - `audioviz.delete_preset`: Deletes the preset from a specified slot. It will require a `preset_index` (0-19). This service calls `DELETE /api/v1/presets/{id}`.
 
 # Plan for Creating the Lovelace UI
-Create Input Helpers for Preset Management First, create helper entities that will be used to provide the preset_index and preset_name when saving a new preset.
-Go to Settings -> Devices & Services -> Helpers.
-Create a Number helper (e.g., input_number.audioviz_preset_index) with a range from 0 to 19 and step of 1.
-Create a Text helper (e.g., input_text.audioviz_preset_name) to hold the name for the new preset.
-Build the Main Device Card Use an Entities card to group the primary controls. This card will automatically display the correct UI elements (toggle, sliders, dropdowns) for each entity.
+- Create Input Helpers for Preset Management First, create helper entities that will be used to provide the preset_index and preset_name when saving a new preset.
+- Go to Settings -> Devices & Services -> Helpers.
+- Create a Number helper (e.g., input_number.audioviz_preset_index) with a range from 0 to 19 and step of 1.
+- Create a Text helper (e.g., input_text.audioviz_preset_name) to hold the name for the new preset.
+- Build the Main Device Card Use an Entities card to group the primary controls. This card will automatically display the correct UI elements (toggle, sliders, dropdowns) for each entity.
 # In your Lovelace dashboard UI editor
+```yaml
 type: entities
 title: AudioVisualizer Control
 entities:
@@ -43,9 +44,11 @@ entities:
   - entity: select.audioviz_display_mode
   - entity: select.audioviz_animation_mode
   - entity: select.audioviz_fft_size
+```
 Build the Preset Management Section This requires a combination of cards to display the list of presets and provide controls for saving, activating, and deleting them.
 A. Save Preset Card Use an Entities card to group the input helpers and a button to call the save service.
 # Card for saving a new preset
+```yaml
 type: entities
 title: Save New Preset
 entities:
@@ -65,10 +68,12 @@ footer:
         service_data:
           preset_index: "{{ states('input_number.audioviz_preset_index') | int }}"
           preset_name: "{{ states('input_text.audioviz_preset_name') }}"
+```
 B. Preset List and Actions Card To dynamically display the list of saved presets with "Activate" and "Delete" buttons for each, the custom:auto-entities card combined with custom:button-card is a powerful approach. You will need to install these from HACS (Home Assistant Community Store).
 This card will automatically generate a row for each preset found in the sensor's attributes.
 # Card to list presets and provide actions
 # Requires auto-entities and button-card from HACS
+```yaml
 type: custom:auto-entities
 card:
   type: entities
@@ -95,4 +100,5 @@ filter:
         }
       }},
     {% endfor %}
+```
 This configuration creates a list where tapping a preset activates it, and holding it down deletes it.
