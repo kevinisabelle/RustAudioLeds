@@ -131,7 +131,9 @@ class AudioLedsLight(CoordinatorEntity[AudioLedsDataUpdateCoordinator], LightEnt
         session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
         url = f"{self.coordinator.api_url}/command"
         try:
-            async with session.post(url, json=data) as response:
+            async with session.post(
+                url, json=data, ssl=self.coordinator.verify_ssl
+            ) as response:
                 if response.status == 200:
                     await self.coordinator.async_request_refresh()
                 else:
@@ -145,7 +147,9 @@ class AudioLedsLight(CoordinatorEntity[AudioLedsDataUpdateCoordinator], LightEnt
         session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
         url = f"{self.coordinator.api_url}/command"
         try:
-            async with session.post(url, json=data) as response:
+            async with session.post(
+                url, json=data, ssl=self.coordinator.verify_ssl
+            ) as response:
                 if response.status == 200:
                     await self.coordinator.async_request_refresh()
                 else:
@@ -208,7 +212,9 @@ class AudioLedsColorLight(
         session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
         url = f"{self.coordinator.api_url}/command"
         try:
-            async with session.post(url, json=data) as response:
+            async with session.post(
+                url, json=data, ssl=self.coordinator.verify_ssl
+            ) as response:
                 if response.status == 200:
                     await self.coordinator.async_request_refresh()
                 else:

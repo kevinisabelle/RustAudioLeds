@@ -5,7 +5,7 @@ import logging
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform, CONF_HOST, CONF_PORT
+from homeassistant.const import Platform, CONF_HOST, CONF_PORT, CONF_VERIFY_SSL
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv, device_registry as dr, entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -55,14 +55,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass,
         host=entry.data[CONF_HOST],
         port=entry.data[CONF_PORT],
+        verify_ssl=entry.data[CONF_VERIFY_SSL],
     )
 
     await coordinator.async_config_entry_first_refresh()
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
-    if not hasattr(hass.data[DOMAIN], "services_registered"):
-        hass.data[DOMAIN].services_registered = True
+    if not hass.data[DOMAIN].get("services_registered"):
+        hass.data[DOMAIN]["services_registered"] = True
         await async_setup_services(hass)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -102,7 +103,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         url = f"{coordinator.api_url}/presets/save_current"
         try:
             async with session.post(
-                url, json={"index": preset_index, "name": preset_name}
+                url,
+                json={"index": preset_index, "name": preset_name},
+                ssl=coordinator.verify_ssl,
             ) as response:
                 if response.status == 201:
                     await coordinator.async_request_refresh()
@@ -127,7 +130,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         session = async_get_clientsession(hass)
         url = f"{coordinator.api_url}/presets/{preset_index}/activate"
         try:
-            async with session.post(url) as response:
+            async with session.post(url, ssl=coordinator.verify_ssl) as response:
                 if response.status == 200:
                     await coordinator.async_request_refresh()
                 else:
@@ -151,7 +154,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         session = async_get_clientsession(hass)
         url = f"{coordinator.api_url}/presets/{preset_index}"
         try:
-            async with session.delete(url) as response:
+            async with session.delete(url, ssl=coordinator.verify_ssl) as response:
                 if response.status == 204:
                     await coordinator.async_request_refresh()
                 else:
@@ -192,7 +195,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             hass.services.async_remove(DOMAIN, SERVICE_SAVE_PRESET)
             hass.services.async_remove(DOMAIN, SERVICE_ACTIVATE_PRESET)
             hass.services.async_remove(DOMAIN, SERVICE_DELETE_PRESET)
-            if hasattr(hass.data[DOMAIN], "services_registered"):
-                delattr(hass.data[DOMAIN], "services_registered")
+            hass.data[DOMAIN].pop("services_registered", None)
 
     return unload_ok

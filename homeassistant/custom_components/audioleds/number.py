@@ -69,7 +69,9 @@ class AudioLedsGainNumber(CoordinatorEntity[AudioLedsDataUpdateCoordinator], Num
         session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
         url = f"{self.coordinator.api_url}/command"
         try:
-            async with session.post(url, json={"gain": value}) as response:
+            async with session.post(
+                url, json={"gain": value}, ssl=self.coordinator.verify_ssl
+            ) as response:
                 if response.status == 200:
                     await self.coordinator.async_request_refresh()
                 else:
@@ -117,7 +119,11 @@ class AudioLedsSmoothSizeNumber(
         session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
         url = f"{self.coordinator.api_url}/command"
         try:
-            async with session.post(url, json={"smooth_size": int(value)}) as response:
+            async with session.post(
+                url,
+                json={"smooth_size": int(value)},
+                ssl=self.coordinator.verify_ssl,
+            ) as response:
                 if response.status == 200:
                     await self.coordinator.async_request_refresh()
                 else:
@@ -165,11 +171,12 @@ class AudioLedsSkewNumber(
         session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
         url = f"{self.coordinator.api_url}/command"
         try:
-            async with session.post(url, json={"skew": value}) as response:
+            async with session.post(
+                url, json={"skew": value}, ssl=self.coordinator.verify_ssl
+            ) as response:
                 if response.status == 200:
                     await self.coordinator.async_request_refresh()
                 else:
                     _LOGGER.error("Failed to set skew: %s", response.status)
         except Exception as e:
             _LOGGER.error("Failed to set skew: %s", e)
-

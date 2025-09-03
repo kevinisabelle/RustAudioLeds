@@ -81,7 +81,9 @@ class AudioLedsDisplayModeSelect(
         session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
         url = f"{self.coordinator.api_url}/command"
         try:
-            async with session.post(url, json={"display_mode": option}) as response:
+            async with session.post(
+                url, json={"display_mode": option}, ssl=self.coordinator.verify_ssl
+            ) as response:
                 if response.status == 200:
                     await self.coordinator.async_request_refresh()
                 else:
@@ -131,7 +133,9 @@ class AudioLedsAnimationModeSelect(
         session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
         url = f"{self.coordinator.api_url}/command"
         try:
-            async with session.post(url, json={"animation_mode": option}) as response:
+            async with session.post(
+                url, json={"animation_mode": option}, ssl=self.coordinator.verify_ssl
+            ) as response:
                 if response.status == 200:
                     await self.coordinator.async_request_refresh()
                 else:
@@ -199,7 +203,7 @@ class AudioLedsPresetSelect(
                 session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
                 url = f"{self.coordinator.api_url}/presets/{preset_id}/activate"
                 try:
-                    async with session.post(url) as response:
+                    async with session.post(url, ssl=self.coordinator.verify_ssl) as response:
                         if response.status == 200:
                             await self.coordinator.async_request_refresh()
                         else:
@@ -248,11 +252,12 @@ class AudioLedsFftSizeSelect(
         session = self.coordinator.hass.helpers.aiohttp_client.async_get_clientsession()
         url = f"{self.coordinator.api_url}/command"
         try:
-            async with session.post(url, json={"fft_size": int(option)}) as response:
+            async with session.post(
+                url, json={"fft_size": int(option)}, ssl=self.coordinator.verify_ssl
+            ) as response:
                 if response.status == 200:
                     await self.coordinator.async_request_refresh()
                 else:
                     _LOGGER.error("Failed to set FFT size: %s", response.status)
         except Exception as e:
             _LOGGER.error("Failed to set FFT size: %s", e)
-

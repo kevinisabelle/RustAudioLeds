@@ -2,6 +2,7 @@
 from datetime import timedelta
 import logging
 
+from homeassistant.const import CONF_VERIFY_SSL
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -13,9 +14,10 @@ _LOGGER = logging.getLogger(__name__)
 class AudioLedsDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching AudioLEDs data from the device."""
 
-    def __init__(self, hass, *, host: str, port: int):
+    def __init__(self, hass, *, host: str, port: int, verify_ssl: bool):
         """Initialize."""
-        self.api_url = f"http://{host}:{port}/api/v1"
+        self.api_url = f"https://{host}:{port}/api/v1"
+        self.verify_ssl = verify_ssl
         super().__init__(
             hass,
             _LOGGER,
@@ -27,12 +29,16 @@ class AudioLedsDataUpdateCoordinator(DataUpdateCoordinator):
         """Fetch data from API endpoint."""
         session = async_get_clientsession(self.hass)
         try:
-            async with session.get(f"{self.api_url}/info", timeout=10) as response:
+            async with session.get(
+                f"{self.api_url}/info", timeout=10, ssl=self.verify_ssl
+            ) as response:
                 if response.status != 200:
                     raise UpdateFailed(f"Error communicating with API: {response.status}")
                 info_data = await response.json()
 
-            async with session.get(f"{self.api_url}/presets", timeout=10) as response:
+            async with session.get(
+                f"{self.api_url}/presets", timeout=10, ssl=self.verify_ssl
+            ) as response:
                 if response.status != 200:
                     raise UpdateFailed(f"Error communicating with API: {response.status}")
                 presets_data = await response.json()
@@ -40,4 +46,3 @@ class AudioLedsDataUpdateCoordinator(DataUpdateCoordinator):
             return {"info": info_data, "presets": presets_data}
         except Exception as exc:
             raise UpdateFailed(f"Error communicating with API: {exc}") from exc
-
