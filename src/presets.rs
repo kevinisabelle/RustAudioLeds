@@ -181,7 +181,7 @@ fn name_bytes_to_string(name_bytes: &[u8; 16]) -> String {
 }
 
 // Helper for converting String to name byte array
-fn string_to_name_bytes(s: &str) -> [u8; 16] {
+pub fn string_to_name_bytes(s: &str) -> [u8; 16] {
     let mut name_arr = [0u8; 16]; let bytes = s.as_bytes();
     let len = std::cmp::min(bytes.len(), 16); name_arr[..len].copy_from_slice(&bytes[..len]); name_arr
 }

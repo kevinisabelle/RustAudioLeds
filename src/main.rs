@@ -9,6 +9,7 @@ mod values;
 mod presets;
 mod tcp;
 
+use std::env::Args;
 use crate::animations::animate_leds;
 use crate::bluetooth::registration::create_advertisement;
 use crate::bluetooth::visualizer_app::create_and_register_application;
@@ -24,6 +25,7 @@ use cpal::StreamConfig;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::thread;
 use std::time::Duration;
 use zbus::Connection;
 use crate::tcp::server::start_https_server;
@@ -39,7 +41,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Starting LED Strip Visualizer...");
     
     // --- Configuration ---
-    let settings = get_config();
+    let (settings, useHttp, useBluetooth) = get_config();
     let settings_mutex = Arc::new(Mutex::new(settings));
     let state_values = StateValues::new(settings_mutex.clone());
     let state_values_arc_mutex = Arc::new(Mutex::new(state_values));
@@ -78,27 +80,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         String::from(BEARER_TOKEN),
         settings_mutex.clone(),
     );
-    
-    // Start the HTTPS server (spawn async task)
-    tokio::spawn(async move {
-        if let Err(e) = start_https_server(http_server_state).await {
-            eprintln!("HTTPS server error: {e}");
-        }
-    });
-    
-    // --- Bluetooth Setup ---
-    /*let settings_mutex_for_bluetooth = settings_mutex.clone();
-    let state_values_for_bluetooth = state_values_arc_mutex.clone();
-    thread::spawn(move || { 
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        rt.block_on(async {
-            if let Err(e) = setup_bluetooth(settings_mutex_for_bluetooth.clone()).await {
-                eprintln!("Bluetooth setup error: {}", e);
-            } else {
-                println!("Bluetooth setup complete.");
+
+
+    if useHttp {
+        // Start the HTTPS server (spawn async task)
+        println!("HTTP server enabled.");
+        tokio::spawn(async move {
+            if let Err(e) = start_https_server(http_server_state).await {
+                eprintln!("HTTPS server error: {e}");
             }
         });
-    });*/
+    }
+
+    if useBluetooth {
+        // --- Bluetooth Setup ---
+        println!("Bluetooth enabled.");
+        let settings_mutex_for_bluetooth = settings_mutex.clone();
+        thread::spawn(move || {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async {
+                if let Err(e) = setup_bluetooth(settings_mutex_for_bluetooth.clone()).await {
+                    eprintln!("Bluetooth setup error: {}", e);
+                } else {
+                    println!("Bluetooth setup complete.");
+                }
+            });
+        });
+    }
+
 
     // --- Render Loop ---
     loop {

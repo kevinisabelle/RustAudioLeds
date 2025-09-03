@@ -1,12 +1,12 @@
+use crate::presets;
+use crate::presets::{string_to_name_bytes, Preset, PresetInfo};
+use crate::tcp::server_state::{Command, HttpServerState};
 use axum::extract::{Path, State};
 use axum::http::{HeaderMap, StatusCode};
-use axum::{Json, Router};
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
+use axum::{Json, Router};
 use axum_server::tls_rustls::RustlsConfig;
-use crate::presets;
-use crate::presets::Preset;
-use crate::tcp::server_state::{Command, HttpServerState};
 
 async fn info(State(state): State<HttpServerState>) -> impl IntoResponse {
     println!("GET /api/v1/info");
@@ -100,6 +100,19 @@ async fn create_preset_handler(Json(preset): Json<Preset>) -> impl IntoResponse 
     }
 }
 
+async fn save_current_settings_as_preset(State(state): State<HttpServerState>, Json(presetInfo) : Json<PresetInfo>) -> impl IntoResponse {
+    println!("POST /api/v1/presets/save_current");
+    let preset = Preset::from_settings(&state.settings.lock().unwrap(), presetInfo.index, string_to_name_bytes(presetInfo.name.as_str()));
+    
+    match presets::save_preset(&preset) {
+        Ok(_) => {
+            state.settings.lock().unwrap().active_preset = presetInfo.index as usize;
+            Ok(StatusCode::CREATED)
+        },
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
 async fn delete_preset_handler(Path(id): Path<u8>) -> impl IntoResponse {
     println!("DELETE /api/v1/presets/{}", id);
     match presets::delete_preset(id) {
@@ -135,6 +148,7 @@ pub async fn start_https_server(
         .route("/api/v1/presets", get(list_presets_handler).post(create_preset_handler))
         .route("/api/v1/presets/{id}", get(get_preset_handler).delete(delete_preset_handler))
         .route("/api/v1/presets/{id}/activate", post(activate_preset_handler))
+        .route("/api/v1/presets/save_current", post(save_current_settings_as_preset))
         .with_state(state.clone());
 
     println!("HTTPS listening on https://{} ...", state.clone().bind_addr.clone());

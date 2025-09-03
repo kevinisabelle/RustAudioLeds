@@ -74,7 +74,7 @@ impl Settings
     }
 }
 
-pub fn get_config() -> Settings {
+pub fn get_config() -> (Settings, bool, bool) {
 
     let mut settings = Settings {
         smooth_size: DEFAULT_SMOOTH_SIZE,
@@ -101,10 +101,18 @@ pub fn get_config() -> Settings {
     };
 
     settings.set_fft_size(FFT_SIZE);
+    let mut use_http = true;
+    let mut use_bluetooth = false;
 
     let mut args = std::env::args();
     while let Some(arg) = args.next() {
         match arg.as_str() {
+            "--bluetooth" | "-bt" => {
+                use_bluetooth = true;
+            }
+            "--httpserver" | "-http" => {
+                use_http = true;
+            }
             "--smooth" | "-s" => {
                 if let Some(val) = args.next() {
                     settings.smooth_size = val.parse().unwrap_or(DEFAULT_SMOOTH_SIZE);
@@ -178,12 +186,14 @@ pub fn get_config() -> Settings {
         }
     }
 
-    settings
+    (settings, use_http, use_bluetooth)
 }
 
 pub fn display_usage() {
     println!("Usage: audio_visualizer [OPTIONS]");
     println!("Options:");
+    println!("  -bt, --bluetooth             Enable Bluetooth (default: false)");
+    println!("  -http, --httpserver          Enable HTTP server (default: true)");
     println!("  -s, --smooth <size>          Set the smooth size (default: {})", DEFAULT_SMOOTH_SIZE);
     println!("  -g, --gain <value>           Set the gain (default: {})", GAIN);
     println!("  -f, --fps <value>            Set the frames per second (default: {})", FPS);
