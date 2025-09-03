@@ -1,4 +1,4 @@
-﻿"""Constants for the AudioLEDs integration."""
+"""Constants for the AudioLEDs integration."""
 
 DOMAIN = "audioleds"
 

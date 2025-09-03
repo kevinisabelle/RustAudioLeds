@@ -1,4 +1,4 @@
-﻿"""Select platform for AudioLEDs."""
+"""Select platform for AudioLEDs."""
 from __future__ import annotations
 
 import logging

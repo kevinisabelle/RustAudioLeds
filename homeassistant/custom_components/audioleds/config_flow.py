@@ -1,4 +1,4 @@
-﻿"""Config flow for AudioLEDs integration."""
+"""Config flow for AudioLEDs integration."""
 import logging
 
 import voluptuous as vol
@@ -30,7 +30,7 @@ class AudioLedsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             session = async_get_clientsession(self.hass)
             host = user_input[CONF_HOST]
             port = user_input[CONF_PORT]
-            url = f"http://{host}:{port}/api/v1/info"
+            url = f"https://{host}:{port}/api/v1/info"
 
             try:
                 async with session.get(url, timeout=10) as response:

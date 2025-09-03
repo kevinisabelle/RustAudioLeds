@@ -1,4 +1,4 @@
-﻿"""Sensor platform for AudioLEDs."""
+"""Sensor platform for AudioLEDs."""
 from __future__ import annotations
 
 import logging

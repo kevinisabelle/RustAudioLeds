@@ -1,4 +1,4 @@
-﻿"""Data update coordinator for the AudioLEDs integration."""
+"""Data update coordinator for the AudioLEDs integration."""
 from datetime import timedelta
 import logging
 

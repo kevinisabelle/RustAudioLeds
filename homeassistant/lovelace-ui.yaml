@@ -1,4 +1,4 @@
-﻿# Note: Before using this configuration, you must replace the placeholder entity IDs
+# Note: Before using this configuration, you must replace the placeholder entity IDs
 # (e.g., light.audioleds_your_device) with the actual entity IDs from your integration.
 # You can find your entity IDs in Settings -> Devices & Services -> Entities.
 

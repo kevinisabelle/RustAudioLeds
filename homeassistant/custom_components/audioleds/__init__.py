@@ -1,4 +1,4 @@
-﻿"""The AudioLEDs integration."""
+"""The AudioLEDs integration."""
 from __future__ import annotations
 
 import logging

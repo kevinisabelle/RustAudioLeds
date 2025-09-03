@@ -1,4 +1,4 @@
-﻿"""Number platform for AudioLEDs."""
+"""Number platform for AudioLEDs."""
 from __future__ import annotations
 
 import logging

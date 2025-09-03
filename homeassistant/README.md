@@ -1,4 +1,4 @@
-﻿# AudioLEDs Home Assistant Integration
+# AudioLEDs Home Assistant Integration
 
 This custom integration allows you to control and manage your AudioLEDs device from within Home Assistant.
 
